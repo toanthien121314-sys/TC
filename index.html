@@ -8,19 +8,54 @@
     <link rel="manifest" href="https://toanthien121314-sys.github.io/TC/manifest.json">
     <meta name="theme-color" content="#f8f9fa">
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Meow Fin">
+    
     <link rel="apple-touch-icon" href="https://toanthien121314-sys.github.io/TC/icon.png">
     <link rel="icon" type="image/png" href="https://toanthien121314-sys.github.io/TC/icon.png">
 
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #f8f9fa; }
-        .app-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; }
-        iframe { flex-grow: 1; width: 100%; height: 100%; border: none; }
+        /* Sửa lại CSS phần body và app-container */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden; 
+            background-color: #f8f9fa; /* Màu nền khu vực thanh trạng thái */
+        }
+        
+        .app-container { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            
+            /* QUAN TRỌNG: Đẩy nội dung xuống né khu vực tai thỏ/camera */
+            padding-top: env(safe-area-inset-top); 
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            box-sizing: border-box; /* Đảm bảo padding không làm phình kích thước container */
+        }
+        
+        iframe { 
+            flex-grow: 1; 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            background-color: #f8f9fa; /* Tránh chớp trắng khi iframe đang tải */
+        }
         
         /* Nút cài đặt ma thuật */
         #install-btn {
-            display: none; /* Ẩn mặc định, chỉ hiện khi Chrome cho phép */
+            display: none;
             position: absolute;
-            bottom: 30px;
+            bottom: 30px; /* Có thể đổi thành bottom: calc(30px + env(safe-area-inset-bottom)); nếu bị vướng thanh home ở dưới */
             left: 50%;
             transform: translateX(-50%);
             padding: 15px 30px;
@@ -55,16 +90,14 @@
         const installBtn = document.getElementById('install-btn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Ngăn Chrome tự hiện popup mặc định (để tự mình kiểm soát)
             e.preventDefault();
             deferredPrompt = e;
-            // Cho hiện nút màu vàng lên!
             installBtn.style.display = 'block';
         });
 
         installBtn.addEventListener('click', async () => {
-            installBtn.style.display = 'none'; // Ẩn nút đi
-            deferredPrompt.prompt(); // Mở bảng cài đặt của điện thoại
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             deferredPrompt = null;
         });
