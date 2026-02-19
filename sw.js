@@ -1,5 +1,5 @@
 // ĐỔI SỐ PHIÊN BẢN NÀY (v2, v3, v4...) MỖI KHI BẠN THAY ĐỔI CODE HTML HAY ẢNH LOGO
-const CACHE_NAME = 'meow-fin-v7'; 
+const CACHE_NAME = 'meow-fin-v8'; 
 
 // Danh sách các file cốt lõi cần lưu vào điện thoại
 const urlsToCache = [
