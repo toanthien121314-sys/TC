@@ -31,13 +31,16 @@
       --bg-color: #f8f9fa;
     }
 
-    body { 
-      background-color: var(--bg-color); 
+    /* Ép tràn viền 100% để loại bỏ khoảng trắng dư thừa */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+      overflow: hidden;
+      background-color: var(--bg-color);
       color: var(--text-color); 
       font-family: 'Be Vietnam Pro', sans-serif; 
-      margin: 0; 
-      padding: 0;
-      overflow: hidden; 
       -webkit-user-select: none; 
       user-select: none;
       overscroll-behavior: none;
@@ -49,21 +52,22 @@
     }
 
     /* =========================================
-       2. KHUNG CHỨA APP CHÍNH
+       2. KHUNG CHỨA APP CHÍNH (Đã tối ưu Toàn màn hình)
        ========================================= */
     #main-app-container { 
       display: block; 
-      height: 100vh; 
+      height: 100dvh; /* Dùng dvh thay cho vh */
       width: 100vw; 
       position: relative; 
-      padding-top: env(safe-area-inset-top); 
+      padding-top: env(safe-area-inset-top); /* Né tai thỏ trên */
+      padding-bottom: env(safe-area-inset-bottom); /* Né cằm iPhone nếu có */
       box-sizing: border-box;
     }
 
     .main-scroll-area { 
       height: 100%; 
       overflow-y: auto; 
-      padding-bottom: 100px; 
+      padding-bottom: 90px; /* Tăng khoảng trống để không bị thanh tab che */
       padding-top: 10px; 
       -webkit-overflow-scrolling: touch; 
     }
@@ -163,12 +167,18 @@
     .nav-item.active { color: #000; font-weight: 700; } 
     .nav-item.active i { color: #f59f00; }
 
+    /* CẤU HÌNH THANH TAB TRÊN MOBILE (Đã ép sát đáy khít sàn) */
     @media (max-width: 991px) { 
       .nav-bar { 
-        position: fixed; bottom: 0; left: 0; 
-        border-top-left-radius: 25px; 
-        border-top-right-radius: 25px; 
-        padding-bottom: env(safe-area-inset-bottom); 
+        position: fixed; 
+        bottom: 0 !important; /* Ép sát đáy */
+        left: 0; 
+        width: 100%;
+        height: 65px; /* Chiều cao cố định */
+        padding-bottom: 0 !important; /* Xóa khoảng hở */
+        margin-bottom: 0 !important;
+        border-top-left-radius: 20px; 
+        border-top-right-radius: 20px; 
       } 
       .chart-wrapper { height: 320px; } 
     }
