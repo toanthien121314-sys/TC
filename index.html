@@ -22,7 +22,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    
     /* =========================================
        1. CẤU HÌNH GIAO DIỆN CỐT LÕI
        ========================================= */
@@ -32,13 +31,16 @@
       --bg-color: #f8f9fa;
     }
 
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      height: 100% !important;
-      width: 100% !important;
-      overflow: hidden;
-      background-color: var(--bg-color);
+    body { 
+      background-color: var(--bg-color); 
+      color: var(--text-color); 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      margin: 0; 
+      padding: 0;
+      overflow: hidden; 
+      -webkit-user-select: none; 
+      user-select: none;
+      overscroll-behavior: none;
     }
 
     input, textarea { 
@@ -51,8 +53,7 @@
        ========================================= */
     #main-app-container { 
       display: block; 
-      /* Đổi vh thành dvh để tương thích tốt hơn với mobile */
-      height: 100dvh; 
+      height: 100vh; 
       width: 100vw; 
       position: relative; 
       padding-top: env(safe-area-inset-top); 
@@ -164,22 +165,12 @@
 
     @media (max-width: 991px) { 
       .nav-bar { 
-        position: fixed; 
-        bottom: 0 !important; /* Ép sát đáy màn hình */
-        left: 0; 
-        width: 100%;
-        height: 65px; /* Cố định chiều cao để dễ tính toán */
-        padding-bottom: 0 !important; /* Triệt tiêu khoảng hở env() cũ */
-        margin-bottom: 0 !important;
-        border-top-left-radius: 20px; 
-        border-top-right-radius: 20px;
-        z-index: 9999;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+        position: fixed; bottom: 0; left: 0; 
+        border-top-left-radius: 25px; 
+        border-top-right-radius: 25px; 
+        padding-bottom: env(safe-area-inset-bottom); 
       } 
-      .main-scroll-area { 
-        /* Tăng khoảng cách đệm phía dưới của nội dung để không bị thanh tab che mất */
-        padding-bottom: 80px !important; 
-      }
+      .chart-wrapper { height: 320px; } 
     }
     
     @media (min-width: 992px) { 
