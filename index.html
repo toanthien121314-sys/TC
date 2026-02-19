@@ -56,7 +56,7 @@
       height: 100vh; 
       width: 100vw; 
       position: relative; 
-      padding-top: env(safe-area-inset-top); /* Tránh tai thỏ iOS */
+      padding-top: env(safe-area-inset-top); 
       box-sizing: border-box;
     }
 
@@ -189,6 +189,32 @@
 
     .money-inc { color: #198754; font-weight: 700; } 
     .money-exp { color: #dc3545; font-weight: 700; }
+
+    /* --- NÚT CÀI ĐẶT PWA --- */
+    #install-btn {
+      display: none; 
+      position: fixed;
+      bottom: 80px; 
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 25px;
+      background-color: #ffc107;
+      color: #000;
+      font-weight: bold;
+      font-size: 15px;
+      border: 2px solid #fff;
+      border-radius: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      z-index: 9999;
+      cursor: pointer;
+      animation: pulse-btn 2s infinite;
+    }
+    
+    @keyframes pulse-btn {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.05); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -358,12 +384,14 @@
     </div>
   </div>
 
+  <button id="install-btn"><i class="bi bi-download me-2"></i>CÀI ĐẶT MEOW FIN</button>
+
   <script>
     // ===============================================
     // KẾT NỐI API VÀ LƯU ĐỆM CHUYÊN NGHIỆP
     // ===============================================
 
-    // LƯU Ý: THAY ĐƯỜNG LINK DƯỚI ĐÂY NẾU BẠN VỪA DEPLOY BẢN MỚI TRÊN GOOGLE APPS SCRIPT
+    // LƯU Ý: THAY ĐƯỜNG LINK DƯỚI ĐÂY BẰNG LINK API MỚI CỦA BẠN NẾU CÓ
     const API_URL = "https://script.google.com/macros/s/AKfycbz4-8qbW9zQ8oq7l4pSmtJT1dkHLOZNGBjTbHCmVBp0wCR9VeRxOuLjnZyKssD7vYzx/exec"; 
 
     let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{} };
@@ -372,6 +400,24 @@
     let CURRENT_HIST_FILTER = 'week';
     const PIE_COLORS = ['#ffc107', '#fd7e14', '#dc3545', '#e83e8c', '#6f42c1', '#0d6efd', '#0dcaf0', '#198754', '#20c997', '#6c757d'];
     let currentFetchId = 0;
+
+    // --- PWA INSTALL LOGIC ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+        installBtn.style.display = 'none';
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        deferredPrompt = null;
+    });
 
     // --- HÀM LÕI GỌI API (Thay thế google.script.run) ---
     async function callGoogleApi(action, payload = null) {
