@@ -1,6 +1,6 @@
 {
   "short_name": "Meow Fin",
-  "name": "Quản Lý Tài Chính",
+  "name": "Quản Lý Tài Chính Pro",
   "icons": [
     {
       "src": "https://drive.google.com/uc?export=view&id=19hEUw1Xuzx0m42WPttoLY84DvvgUUG-0",
@@ -8,9 +8,10 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "./index.html",
-  "background_color": "#f8f9fa",
+  "start_url": "/TC/index.html",
   "display": "standalone",
-  "scope": "./",
+  "orientation": "portrait",
+  "scope": "/TC/",
+  "background_color": "#f8f9fa",
   "theme_color": "#ffc107"
 }
