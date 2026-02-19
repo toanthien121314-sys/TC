@@ -3,70 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Quản Lý Tài Chính Pro - Meow Garden</title>
+    <title>Quản Lý Tài Chính</title>
     
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="https://toanthien121314-sys.github.io/TC/manifest.json">
     <meta name="theme-color" content="#ffc107">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Meow Garden">
-
-    <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=19hEUw1Xuzx0m42WPttoLY84DvvgUUG-0">
-    <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=19hEUw1Xuzx0m42WPttoLY84DvvgUUG-0">
+    
+    <link rel="apple-touch-icon" href="https://toanthien121314-sys.github.io/TC/icon.png">
+    <link rel="icon" type="image/png" href="https://toanthien121314-sys.github.io/TC/icon.png">
 
     <style>
-        /* Xóa bỏ mọi khoảng trắng mặc định */
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
-            width: 100%;
-            overflow: hidden; 
-            background-color: #f8f9fa; 
-        }
-
-        /* Khung chứa ứng dụng toàn màn hình tuyệt đối */
-        .app-container {
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #f8f9fa; }
+        .app-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        iframe { flex-grow: 1; width: 100%; height: 100%; border: none; }
+        
+        /* Nút cài đặt ma thuật */
+        #install-btn {
+            display: none; /* Ẩn mặc định, chỉ hiện khi Chrome cho phép */
             position: absolute;
-            top: 0; 
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Tối ưu hóa Iframe nhúng từ GAS */
-        iframe { 
-            flex-grow: 1;
-            width: 100%; 
-            height: 100%; 
-            border: none;
-            -webkit-font-smoothing: antialiased;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background-color: #ffc107;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 9999;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        <iframe 
-            src="https://script.google.com/macros/s/AKfycbw8hCFA8B2U9j4seHAUVWGec7xUB1HsTdrd468vQsHPknKW5l8UTy5lq9LwZEpFag/exec"
-            allow="clipboard-read; clipboard-write; geolocation"
-            title="Quản Lý Tài Chính Pro">
-        </iframe>
+        <iframe src="https://script.google.com/macros/s/AKfycbw8hCFA8B2U9j4seHAUVWGec7xUB1HsTdrd468vQsHPknKW5l8UTy5lq9LwZEpFag/exec"></iframe>
     </div>
+    
+    <button id="install-btn">CÀI ĐẶT APP MEOW GARDEN</button>
 
     <script>
-        // ĐĂNG KÝ SERVICE WORKER ĐỂ ẨN THANH ĐỊA CHỈ
+        // 1. ĐĂNG KÝ SERVICE WORKER BẰNG LINK TUYỆT ĐỐI
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log("SW OK!"))
-            .catch((err) => console.log("SW Lỗi: ", err));
+            navigator.serviceWorker.register('https://toanthien121314-sys.github.io/TC/sw.js')
+            .then(() => console.log("SW OK"));
         }
 
-        // 2. BẪY LỊCH SỬ CHỐN NÚT BACK
+        // 2. ÉP HIỆN NÚT CÀI ĐẶT TỰ ĐỘNG
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Ngăn Chrome tự hiện popup mặc định (để tự mình kiểm soát)
+            e.preventDefault();
+            deferredPrompt = e;
+            // Cho hiện nút màu vàng lên!
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            installBtn.style.display = 'none'; // Ẩn nút đi
+            deferredPrompt.prompt(); // Mở bảng cài đặt của điện thoại
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        });
+
+        // 3. BẪY LỊCH SỬ
         (function() {
             history.pushState(null, document.title, location.href);
             window.addEventListener('popstate', function (event) {
