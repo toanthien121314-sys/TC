@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Quản Lý Tài Chính</title>
+    <title>Quản Lý Tài Chính Pro - Meow Garden</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffc107">
 
@@ -16,17 +17,17 @@
     <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=19hEUw1Xuzx0m42WPttoLY84DvvgUUG-0">
 
     <style>
-        /* Xóa bỏ mọi khoảng trắng mặc định của trình duyệt */
+        /* Xóa bỏ mọi khoảng trắng mặc định */
         body, html { 
             margin: 0; 
             padding: 0; 
             height: 100%; 
             width: 100%;
             overflow: hidden; 
-            background-color: #f8f9fa; /* Màu nền đồng bộ với app */
+            background-color: #f8f9fa; 
         }
 
-        /* Khung chứa ứng dụng toàn màn hình */
+        /* Khung chứa ứng dụng toàn màn hình tuyệt đối */
         .app-container {
             position: absolute;
             top: 0; 
@@ -37,13 +38,12 @@
             flex-direction: column;
         }
 
-        /* Tối ưu hóa Iframe để không bị hiện thanh cuộn thừa */
+        /* Tối ưu hóa Iframe nhúng từ GAS */
         iframe { 
             flex-grow: 1;
             width: 100%; 
             height: 100%; 
             border: none;
-            /* Khử răng cưa cho text trên một số trình duyệt */
             -webkit-font-smoothing: antialiased;
         }
     </style>
@@ -60,14 +60,20 @@
 
     <script>
         /**
-         * BẪY LỊCH SỬ: Chặn nút Back của trình duyệt để giữ người dùng ở lại App.
-         * Phù hợp cho trải nghiệm trên điện thoại Android.
+         * BẪY LỊCH SỬ NÂNG CAO: 
+         * Chặn nút Back mà không gây lỗi "undefined" hay trắng màn hình.
          */
         (function() {
-            history.pushState(null, null, location.href);
-            window.onpopstate = function() {
-                history.go(1);
-            };
+            // Thiết lập trạng thái ảo ban đầu
+            history.pushState(null, document.title, location.href);
+
+            window.addEventListener('popstate', function (event) {
+                // Ngay khi nhấn Back, lập tức đẩy lại trạng thái hiện tại vào ngăn xếp
+                history.pushState(null, document.title, location.href);
+                
+                // Ghi chú nhỏ cho hệ thống (Không hiện ra màn hình người dùng)
+                console.log("Nút Back đã được xử lý để tránh lỗi undefined.");
+            });
         })();
     </script>
 </body>
