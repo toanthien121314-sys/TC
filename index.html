@@ -59,20 +59,17 @@
     </div>
 
     <script>
-        /**
-         * BẪY LỊCH SỬ NÂNG CAO: 
-         * Chặn nút Back mà không gây lỗi "undefined" hay trắng màn hình.
-         */
-        (function() {
-            // Thiết lập trạng thái ảo ban đầu
-            history.pushState(null, document.title, location.href);
+        // 1. ĐĂNG KÝ SERVICE WORKER (BẮT BUỘC ĐỂ ẨN THANH ĐỊA CHỈ)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log("Meow Garden App: Đã sẵn sàng!"));
+        }
 
+        // 2. BẪY LỊCH SỬ CHỐN NÚT BACK
+        (function() {
+            history.pushState(null, document.title, location.href);
             window.addEventListener('popstate', function (event) {
-                // Ngay khi nhấn Back, lập tức đẩy lại trạng thái hiện tại vào ngăn xếp
                 history.pushState(null, document.title, location.href);
-                
-                // Ghi chú nhỏ cho hệ thống (Không hiện ra màn hình người dùng)
-                console.log("Nút Back đã được xử lý để tránh lỗi undefined.");
             });
         })();
     </script>
