@@ -59,10 +59,11 @@
     </div>
 
     <script>
-        // 1. ĐĂNG KÝ SERVICE WORKER (BẮT BUỘC ĐỂ ẨN THANH ĐỊA CHỈ)
+        // ĐĂNG KÝ SERVICE WORKER ĐỂ ẨN THANH ĐỊA CHỈ
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Meow Garden App: Đã sẵn sàng!"));
+            navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log("SW OK!"))
+            .catch((err) => console.log("SW Lỗi: ", err));
         }
 
         // 2. BẪY LỊCH SỬ CHỐN NÚT BACK
