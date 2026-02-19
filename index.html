@@ -165,10 +165,17 @@
 
     @media (max-width: 991px) { 
       .nav-bar { 
-        position: fixed; bottom: 0; left: 0; 
-        border-top-left-radius: 25px; 
-        border-top-right-radius: 25px; 
-        padding-bottom: env(safe-area-inset-bottom); 
+        position: fixed; 
+        bottom: 0; 
+        left: 0; 
+        /* Bo góc trên để tạo cảm giác mềm mại */
+        border-top-left-radius: 20px; 
+        border-top-right-radius: 20px; 
+        
+        /* THAY ĐỔI Ở ĐÂY: 
+           Trên Android/Redmi, bác nên dùng một con số cố định (khoảng 8px) 
+           thay vì dùng env() để tránh bị hở đáy. */
+        padding-bottom: 8px; 
       } 
       .chart-wrapper { height: 320px; } 
     }
