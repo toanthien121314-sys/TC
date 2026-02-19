@@ -167,16 +167,16 @@
     @media (max-width: 991px) { 
       .nav-bar { 
         position: fixed; 
-        bottom: 0; 
+        bottom: 0 !important; /* Ép sát đáy */
         left: 0; 
-        /* Bo góc trên để tạo cảm giác mềm mại */
-        border-top-left-radius: 20px; 
-        border-top-right-radius: 20px; 
+        width: 100%;
+        border-top-left-radius: 25px; 
+        border-top-right-radius: 25px; 
         
-        /* THAY ĐỔI Ở ĐÂY: 
-           Trên Android/Redmi, bác nên dùng một con số cố định (khoảng 8px) 
-           thay vì dùng env() để tránh bị hở đáy. */
-        padding-bottom: 8px; 
+        /* QUAN TRỌNG: Bỏ env() và thay bằng số cố định */
+        padding-bottom: 5px !important; 
+        height: 70px; /* Cố định chiều cao thanh tab */
+        margin-bottom: 0 !important;
       } 
       .chart-wrapper { height: 320px; } 
     }
