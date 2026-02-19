@@ -1,0 +1,16 @@
+{
+  "short_name": "Meow Fin",
+  "name": "Quản Lý Tài Chính",
+  "icons": [
+    {
+      "src": "https://drive.google.com/uc?export=view&id=19hEUw1Xuzx0m42WPttoLY84DvvgUUG-0",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/TC/",
+  "background_color": "#f8f9fa",
+  "display": "standalone",
+  "scope": "/TC/",
+  "theme_color": "#ffc107"
+}
