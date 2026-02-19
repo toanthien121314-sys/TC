@@ -8,9 +8,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/TC/",
+  "start_url": "./index.html",
   "background_color": "#f8f9fa",
   "display": "standalone",
-  "scope": "/TC/",
+  "scope": "./",
   "theme_color": "#ffc107"
 }
