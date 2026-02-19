@@ -1,3 +1,7 @@
-self.addEventListener('fetch', function(event) {
-  // Để trống cũng được, chỉ cần có sự kiện fetch để Chrome công nhận là PWA
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('fetch', (e) => {
+  // Giữ kết nối cho App
 });
