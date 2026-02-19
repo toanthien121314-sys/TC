@@ -3,19 +3,19 @@
   "name": "Quản Lý Tài Chính Pro",
   "icons": [
     {
-      "src": "./icon.png",
+      "src": "https://toanthien121314-sys.github.io/TC/icon.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "./icon.png",
+      "src": "https://toanthien121314-sys.github.io/TC/icon.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": "./",
+  "start_url": "https://toanthien121314-sys.github.io/TC/index.html",
   "display": "standalone",
-  "scope": "./",
+  "scope": "https://toanthien121314-sys.github.io/TC/",
   "background_color": "#f8f9fa",
   "theme_color": "#ffc107"
 }
