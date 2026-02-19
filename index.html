@@ -6,65 +6,62 @@
     <title>Quản Lý Tài Chính</title>
     
     <link rel="manifest" href="https://toanthien121314-sys.github.io/TC/manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Meow Fin">
+    <meta name="theme-color" content="#f8f9fa">
     
     <link rel="apple-touch-icon" href="https://toanthien121314-sys.github.io/TC/icon.png">
     <link rel="icon" type="image/png" href="https://toanthien121314-sys.github.io/TC/icon.png">
 
     <style>
-    body, html { 
-        margin: 0; 
-        padding: 0; 
-        height: 100%; 
-        width: 100%; 
-        overflow: hidden; 
-        /* Ép nền trắng tinh để hòa làm 1 với thanh trạng thái Android */
-        background-color: #ffffff; 
-    }
-    
-    .app-container { 
-        position: absolute; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background-color: #ffffff; 
-        /* XÓA các dòng padding env() của Apple đi vì trên Android nó có thể gây lỗi khoảng trắng */
-    }
-    
-    iframe { 
-        width: 100%; 
-        border: none; 
-        display: block;
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden; 
+            background-color: #f8f9fa; /* Trả lại màu xám nhạt */
+        }
         
-        /* THỦ THUẬT: Kéo iframe xích lên trên 6px để "cắt" bỏ thanh loading của Google */
-        margin-top: -6px; 
-        /* Bù lại chiều cao để dưới đáy không bị hụt */
-        height: calc(100% + 6px); 
-    }
-    
-    #install-btn {
-        display: none;
-        position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 30px;
-        background-color: #ffc107;
-        color: #000;
-        font-weight: bold;
-        font-size: 16px;
-        border: 2px solid #fff;
-        border-radius: 25px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        z-index: 9999;
-        cursor: pointer;
-    }
-</style>
+        .app-container { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: #f8f9fa; 
+            /* QUAN TRỌNG: Lệnh này sẽ như một cái kéo, cắt bỏ mọi thứ của iframe bị đẩy ra ngoài */
+            overflow: hidden; 
+        }
+        
+        iframe { 
+            position: absolute;
+            /* THỦ THUẬT: Đẩy mạnh iframe lên trên 15 pixel để giấu hẳn cái bóng mờ của Google Apps Script */
+            top: -15px; 
+            left: 0;
+            width: 100%; 
+            /* Bù lại 15 pixel ở dưới đáy để app không bị hụt lên trên */
+            height: calc(100% + 15px); 
+            border: none; 
+            display: block;
+        }
+        
+        #install-btn {
+            display: none;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background-color: #ffc107;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 9999;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
