@@ -447,6 +447,18 @@
         }
     }
 
+    // --- HÀM HIỂN THỊ LOADING BONK MỚI ---
+    function showLoadingBonk(text = 'Đang xử lý...') {
+        Swal.fire({
+            title: text,
+            imageUrl: './bonk.gif',
+            imageWidth: 150,
+            imageAlt: 'Loading...',
+            showConfirmButton: false,
+            allowOutsideClick: false
+        });
+    }
+
     // --- KHỞI ĐỘNG APP ---
     window.addEventListener('load', function() {
         if ('serviceWorker' in navigator) {
@@ -542,7 +554,7 @@
     function saveData() { 
         const amt = document.getElementById('inpAmount').value.replace(/\./g, ''); 
         if(!amt) return Swal.fire({title:'Thiếu số tiền!', icon:'warning', confirmButtonColor:'#ffc107'}); 
-        Swal.fire({title:'Đang lưu...', didOpen:()=>Swal.showLoading(), allowOutsideClick:false}); 
+        showLoadingBonk('Đang lưu...'); 
         
         const payload = { 
             date:document.getElementById('inpDate').value, 
@@ -566,7 +578,7 @@
     function delTx(idx) { 
         Swal.fire({title:'Xóa?', showCancelButton:true, confirmButtonColor:'#d33'}).then(r => { 
             if(r.isConfirmed) {
-                Swal.fire({title: 'Đang xóa...', didOpen: () => Swal.showLoading()});
+                showLoadingBonk('Đang xóa...');
                 callGoogleApi('deleteTransaction', idx).then(() => {
                     Swal.close();
                     loadData();
@@ -576,13 +588,13 @@
     }
 
     // --- CÁC HÀM QUẢN LÝ QUỸ & DANH MỤC ---
-    function addCat() { Swal.fire({title:'Thêm danh mục', input:'text', showCancelButton:true}).then(r => { if(r.value) { Swal.fire({title:'Đang lưu...', didOpen:()=>Swal.showLoading()}); callGoogleApi('addCategory', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
-    function addFund() { Swal.fire({title:'Thêm quỹ', input:'text', showCancelButton:true}).then(r => { if(r.value) { Swal.fire({title:'Đang lưu...', didOpen:()=>Swal.showLoading()}); callGoogleApi('createFund', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
+    function addCat() { Swal.fire({title:'Thêm danh mục', input:'text', showCancelButton:true}).then(r => { if(r.value) { showLoadingBonk('Đang lưu...'); callGoogleApi('addCategory', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
+    function addFund() { Swal.fire({title:'Thêm quỹ', input:'text', showCancelButton:true}).then(r => { if(r.value) { showLoadingBonk('Đang lưu...'); callGoogleApi('createFund', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
     
     function delCat(n) { 
         Swal.fire({ title: 'Xóa danh mục?', html: `Xóa <b>${n}</b>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Xóa ngay' }).then(r => { 
             if(r.isConfirmed) {
-                Swal.fire({title: 'Đang xóa...', didOpen: () => Swal.showLoading()});
+                showLoadingBonk('Đang xóa...');
                 callGoogleApi('deleteCategory', n).then(() => { Swal.close(); loadData(); }); 
             }
         }); 
@@ -591,7 +603,7 @@
     function delFund(n) { 
         Swal.fire({ title: 'Xóa quỹ tiền?', html: `Xóa <b>${n}</b>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Xóa ngay' }).then(r => { 
             if(r.isConfirmed) {
-                Swal.fire({title: 'Đang xóa...', didOpen: () => Swal.showLoading()});
+                showLoadingBonk('Đang xóa...');
                 callGoogleApi('deleteFund', n).then(() => { Swal.close(); loadData(); }); 
             }
         }); 
@@ -631,7 +643,7 @@
     }
 
     function executeCompression(p1, p2 = null) {
-      Swal.fire({ title: 'Đang xử lý...', text: 'Đang tạo file nén và tính toán lại số dư...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      showLoadingBonk('Đang nén dữ liệu...');
       callGoogleApi('archiveDataByPeriod', {p1: p1, p2: p2}).then(msg => {
         Swal.fire({ title: 'Kết quả', text: msg, icon: msg.includes('Lỗi') ? 'error' : 'success' });
         loadData(); 
@@ -644,7 +656,7 @@
         showCancelButton: true, confirmButtonColor: '#6c757d', confirmButtonText: 'Đồng ý hoàn tác'
       }).then((r) => {
         if (r.isConfirmed) {
-          Swal.fire({ title: 'Đang khôi phục...', didOpen: () => Swal.showLoading() });
+          showLoadingBonk('Đang khôi phục...');
           callGoogleApi('undoLastArchive').then(msg => {
             Swal.fire('Thông báo', msg, 'info');
             loadData();
@@ -654,7 +666,7 @@
     }
 
     function showArchives() {
-      Swal.fire({ title: 'Đang tải danh sách...', didOpen: () => Swal.showLoading() });
+      showLoadingBonk('Đang tải danh sách...');
       callGoogleApi('getArchiveList').then(files => {
         Swal.close();
         let html = '';
@@ -685,7 +697,7 @@
         inputValidator: (value) => { if (!value) return 'Tên không được để trống!'; }
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({ title: 'Đang đổi tên...', didOpen: () => Swal.showLoading() });
+          showLoadingBonk('Đang đổi tên...');
           callGoogleApi('renameArchiveFile', {id: id, newName: result.value}).then(msg => {
             Swal.fire('Hoàn tất', msg, 'success');
             showArchives(); 
@@ -695,7 +707,7 @@
     }
 
     function viewArchiveData(id, name) {
-      Swal.fire({ title: 'Đang xử lý dữ liệu...', didOpen: () => Swal.showLoading() });
+      showLoadingBonk('Đang xử lý dữ liệu...');
       callGoogleApi('getArchiveContent', id).then(data => {
         if (data.error) return Swal.fire('Lỗi', data.error, 'error');
 
@@ -777,7 +789,7 @@
               showCancelButton: true, confirmButtonText: 'Đồng ý', confirmButtonColor: '#198754'
             }).then((r) => {
               if (r.isConfirmed) {
-                Swal.fire({ title: 'Đang khôi phục...', didOpen: () => Swal.showLoading() });
+                showLoadingBonk('Đang khôi phục...');
                 callGoogleApi('restoreDataFromDrive', id).then(msg => {
                   Swal.fire('Thành công', msg, 'success');
                   loadData(); 
