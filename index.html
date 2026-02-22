@@ -429,15 +429,22 @@
         deferredPrompt = null;
     });
 
-    // --- HÀM LÕI GỌI API (Thay thế google.script.run) ---
+   // --- HÀM LÕI GỌI API (Đã thêm thời gian chờ tối thiểu) ---
     async function callGoogleApi(action, payload = null) {
         try {
-            const response = await fetch(API_URL, {
+            // Cài đặt thời gian hiển thị tối thiểu (1500ms = 1.5 giây)
+            // Bạn có thể tăng lên 2000 (2 giây) nếu muốn xem chú chó gõ lâu hơn
+            const minDelay = new Promise(resolve => setTimeout(resolve, 3000)); 
+            
+            const apiCall = fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: action, payload: payload })
-            });
-            const result = await response.json();
+            }).then(res => res.json());
+
+            // Dùng Promise.all để bắt buộc chờ cả API gọi xong VÀ đủ thời gian Delay tối thiểu
+            const [result] = await Promise.all([apiCall, minDelay]);
+
             if (result.status === 'success') return result.data;
             throw new Error(result.message);
         } catch (error) {
