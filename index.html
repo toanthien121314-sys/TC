@@ -948,9 +948,11 @@
         let goldTotalValue = 0;
         let tbodyGold = '';
         
-        // 1. RENDER BẢNG VÀNG
+        // 1. RENDER BẢNG VÀNG (Đã thêm cơ chế bảo vệ DOM chống sập)
         if (data.goldRecords && data.goldRecords.length > 0) {
-            document.getElementById('ui-gold-ledger').style.display = 'block';
+            const ledgerEl = document.getElementById('ui-gold-ledger');
+            if(ledgerEl) ledgerEl.style.display = 'block';
+            
             data.goldRecords.forEach((g, i) => {
                 let w = parseFloat(g.weight) || 0;
                 let totalBuyPrice = parseFloat(g.buyPrice) || 0;
@@ -992,21 +994,25 @@
                     <td>${profitCellHtml}</td>
                   </tr>`;
             });
-            document.getElementById('tbody-gold').innerHTML = tbodyGold;
+            const tbodyEl = document.getElementById('tbody-gold');
+            if(tbodyEl) tbodyEl.innerHTML = tbodyGold;
         } else {
-            document.getElementById('ui-gold-ledger').style.display = 'none';
+            const ledgerEl = document.getElementById('ui-gold-ledger');
+            if(ledgerEl) ledgerEl.style.display = 'none';
         }
 
-        // 2. TÍNH TỔNG TÀI SẢN (Bảo vệ lỗi NaN)
+        // 2. TÍNH TỔNG TÀI SẢN 
         let displayTotal = Number(data.total || 0) + goldTotalValue;
         if (data.balances && data.balances['Gold']) {
             displayTotal -= Number(data.balances['Gold']);
         }
 
         const totalEl = document.getElementById('ui-total');
-        totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
-        if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
-        else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
+        if(totalEl) {
+            totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
+            if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
+            else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
+        }
         
         // 3. RENDER DANH SÁCH QUỸ
         let h = ''; 
@@ -1019,7 +1025,8 @@
                       </div>`; 
             }); 
         }
-        document.getElementById('ui-funds-list').innerHTML = h; 
+        const fundsListEl = document.getElementById('ui-funds-list');
+        if(fundsListEl) fundsListEl.innerHTML = h; 
         
         if(data.funds) {
             data.funds.forEach((f, idx) => {
@@ -1036,38 +1043,60 @@
         renderHistoryList(); 
         
         let fO = data.funds ? data.funds.map(f => `<option value="${f}">${f}</option>`).join('') : ''; 
-        document.getElementById('inpFundSource').innerHTML = fO; 
-        document.getElementById('inpFundDest').innerHTML = fO; 
+        const inpSource = document.getElementById('inpFundSource');
+        if(inpSource) inpSource.innerHTML = fO; 
+        const inpDest = document.getElementById('inpFundDest');
+        if(inpDest) inpDest.innerHTML = fO; 
         
-        const currentRepFund = document.getElementById('reportFundFilter').value;
-        document.getElementById('reportFundFilter').innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
-        if(data.funds && data.funds.includes(currentRepFund)) document.getElementById('reportFundFilter').value = currentRepFund;
+        const repFilter = document.getElementById('reportFundFilter');
+        if(repFilter) {
+            const currentRepFund = repFilter.value;
+            repFilter.innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
+            if(data.funds && data.funds.includes(currentRepFund)) repFilter.value = currentRepFund;
+        }
 
-        document.getElementById('inpCategory').innerHTML = data.categories ? data.categories.map(c => `<option value="${c}">${c}</option>`).join('') : ''; 
+        const inpCat = document.getElementById('inpCategory');
+        if(inpCat) inpCat.innerHTML = data.categories ? data.categories.map(c => `<option value="${c}">${c}</option>`).join('') : ''; 
 
         const rL = (a, n, c) => a ? a.map(i => `<li class="list-group-item d-flex justify-content-between px-0 border-0">${i}<i class="bi bi-trash text-${c}" onclick="${n}('${i}')"></i></li>`).join('') : ''; 
-        document.getElementById('listCat').innerHTML = rL(data.categories, 'delCat', 'danger'); 
-        document.getElementById('listFund').innerHTML = rL(data.funds, 'delFund', 'primary'); 
-
-        if(document.getElementById('tab-report').classList.contains('active')) renderCharts(); 
-    }
         
-        function renderHistoryList() { 
-        if(!GLOBAL_DATA.history) return; // Bảo vệ nếu mất dữ liệu
+        const listCat = document.getElementById('listCat');
+        if(listCat) listCat.innerHTML = rL(data.categories, 'delCat', 'danger'); 
+        
+        const listFund = document.getElementById('listFund');
+        if(listFund) listFund.innerHTML = rL(data.funds, 'delFund', 'primary'); 
+
+        const tabReport = document.getElementById('tab-report');
+        if(tabReport && tabReport.classList.contains('active')) renderCharts(); 
+    }
+
+    function renderHistoryList() { 
+        if(!GLOBAL_DATA.history) return; 
         
         let combinedData = [...GLOBAL_DATA.history];
 
+        // Gộp Vàng vào Lịch sử & Dịch lại ngày tháng chuẩn xác
         if (GLOBAL_DATA.goldRecords && GLOBAL_DATA.goldRecords.length > 0) {
             GLOBAL_DATA.goldRecords.forEach(g => {
-                let dateVal = g.date || '';
-                let ts = dateVal ? new Date(dateVal).getTime() : new Date().getTime();
+                let dateVal = String(g.date || '');
+                let ts = new Date().getTime(); // Giá trị mặc định an toàn
                 
-                let dParts = dateVal.split('-');
-                let dateStr = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : dateVal;
+                // Thuật toán bẻ khóa ngày tháng "dd/MM/yyyy" thành Timestamp chuẩn
+                if (dateVal.includes('/')) {
+                    let parts = dateVal.split('/');
+                    if (parts.length === 3) {
+                        ts = new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                    }
+                } else if (dateVal.includes('-')) { 
+                    let parts = dateVal.split('-');
+                    if (parts.length === 3) {
+                        ts = new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+                    }
+                }
 
                 combinedData.push({
                     timestamp: ts,
-                    dateStr: dateStr,
+                    dateStr: dateVal, // Vẫn giữ nguyên chuỗi để in ra màn hình cho đẹp
                     type: 'Vang', 
                     category: `Mua Vàng (${g.weight} ${g.unit})`,
                     note: g.note || '',
@@ -1115,7 +1144,6 @@
         const historyListEl = document.getElementById('ui-history-list');
         if(historyListEl) historyListEl.innerHTML = hH; 
     }
-
     function renderHistoryList() { 
         const f = GLOBAL_DATA.history.filter(i => isDateInRange(i.timestamp, CURRENT_HIST_FILTER, 'histStart', 'histEnd')); 
         let hH = f.length ? '' : '<p class="text-center py-5 text-muted">Không có dữ liệu</p>'; 
