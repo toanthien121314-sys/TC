@@ -298,6 +298,19 @@
               <div id="ui-funds-list">
                 <div class="glowing-dots" style="background:#fff; border-radius:10px;"><span></span><span></span><span></span></div>
               </div>
+              
+              <div id="ui-gold-ledger" class="card-box mt-3" style="display:none; overflow: hidden; padding: 15px;">
+                <h6 class="fw-bold text-warning mb-2"><i class="bi bi-stars"></i> Bảng theo dõi Vàng</h6>
+                <div class="table-responsive bg-white rounded-3 border">
+                  <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size: 0.75rem;">
+                    <thead class="table-light">
+                      <tr><th>STT</th><th>KL</th><th>Đ.Vị</th><th>Giá mua</th><th>Giá mới</th></tr>
+                    </thead>
+                    <tbody id="tbody-gold"></tbody>
+                  </table>
+                </div>
+              </div>
+              
             </div>
           </div>
         </div>
@@ -356,15 +369,44 @@
               
               <input type="radio" class="btn-check" name="type" id="tChuyen" value="Chuyen" onchange="toggleMode()">
               <label class="btn btn-outline-dark border-0 py-3" for="tChuyen">Chuyển</label>
+              
+              <input type="radio" class="btn-check" name="type" id="tVang" value="Vang" onchange="toggleMode()">
+              <label class="btn btn-outline-dark border-0 py-3 text-warning fw-bold" for="tVang">Vàng</label>
             </div>
 
-            <div class="mb-3"><input type="date" class="form-control" id="inpDate"></div>
-            <div class="row">
+            <div class="mb-3">
+              <label class="small fw-bold text-muted mb-1" id="lblDate">Ngày giao dịch</label>
+              <input type="date" class="form-control" id="inpDate">
+            </div>
+            
+            <div class="row" id="divStandardFunds">
               <div class="col-6 mb-3"><select class="form-select" id="inpFundSource"></select></div>
               <div class="col-6 mb-3" id="divToFund" style="display:none"><select class="form-select" id="inpFundDest"></select></div>
             </div>
+            
             <div class="mb-3" id="divCategory"><select class="form-select" id="inpCategory"></select></div>
-            <div class="mb-3">
+            
+            <div id="divGold" style="display:none;" class="mb-3 p-3 rounded-3" style="background-color: #fff9e6; border: 1px dashed #ffc107;">
+               <div class="mb-3">
+                 <label class="small fw-bold text-dark mb-1">Khối lượng (Số lượng)</label>
+                 <div class="input-group">
+                   <input type="number" step="0.01" class="form-control" id="inpGoldWeight" placeholder="VD: 1, 0.5...">
+                   <span class="input-group-text bg-white border-start-0 text-muted" style="border-right: none;">đơn vị:</span>
+                   <select class="form-select border-start-0" id="inpGoldUnit" style="max-width: 100px; background-color: #f8f9fa;">
+                     <option value="Chỉ">Chỉ</option>
+                     <option value="Phân">Phân</option>
+                     <option value="Lượng">Lượng</option>
+                   </select>
+                 </div>
+               </div>
+               <div class="mb-0">
+                 <label class="small fw-bold text-dark mb-1">Giá nhập / 1 đơn vị (VNĐ)</label>
+                 <input type="text" class="form-control text-warning fw-bold fs-5" id="inpGoldPrice" placeholder="VD: 7.450.000" inputmode="numeric">
+                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập đúng giá tại thời điểm mua để hệ thống tính toán Lời/Lỗ chính xác.</small>
+               </div>
+            </div>
+
+            <div class="mb-3" id="divAmount">
               <input type="text" class="form-control fw-bold fs-5 text-warning" id="inpAmount" placeholder="0" inputmode="numeric">
             </div>
             <div class="mb-3"><input type="text" class="form-control" id="inpNote" placeholder="Ghi chú..."></div>
@@ -454,10 +496,10 @@
     // KẾT NỐI API VÀ LƯU ĐỆM CHUYÊN NGHIỆP
     // ===============================================
 
-    // LƯU Ý: THAY ĐƯỜNG LINK DƯỚI ĐÂY BẰNG LINK API MỚI CỦA BẠN NẾU CÓ
     const API_URL = "https://script.google.com/macros/s/AKfycbz4-8qbW9zQ8oq7l4pSmtJT1dkHLOZNGBjTbHCmVBp0wCR9VeRxOuLjnZyKssD7vYzx/exec"; 
 
-    let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{} };
+    // THÊM: goldRecords vào GLOBAL_DATA
+    let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{}, goldRecords:[] };
     let CHART_COMBINED = null; 
     let CHART_FUND = null; 
     let CURRENT_HIST_FILTER = 'week';
@@ -468,6 +510,7 @@
     let goldChartInstance = null;
     let goldData1Year = []; 
     let goldDataAll = [];   
+    let CURRENT_GOLD_PRICE = 0; 
 
     // --- PWA INSTALL LOGIC ---
     let deferredPrompt;
@@ -487,7 +530,7 @@
         deferredPrompt = null;
     });
 
-   // --- HÀM LÕI GỌI API (Đã thêm thời gian chờ tối thiểu) ---
+   // --- HÀM LÕI GỌI API ---
     async function callGoogleApi(action, payload = null) {
         try {
             const minDelay = new Promise(resolve => setTimeout(resolve, 5000)); 
@@ -532,9 +575,13 @@
         let v = this.value.replace(/[^0-9]/g, ''); 
         if(v) this.value = parseInt(v).toLocaleString('vi-VN'); 
     };
+    
+    document.getElementById('inpGoldPrice').oninput = function() { 
+        let v = this.value.replace(/[^0-9]/g, ''); 
+        if(v) this.value = parseInt(v).toLocaleString('vi-VN'); 
+    };
 
     function initApp() { 
-        // Lấy Cache đổ ra liền lập tức
         const cachedData = localStorage.getItem('meowFinCache');
         if (cachedData) {
             try {
@@ -554,7 +601,6 @@
             else document.getElementById(id).value = t; 
         }); 
 
-        // Khởi động biểu đồ vàng ngầm
         initGoldChart();
     }
 
@@ -563,7 +609,6 @@
         document.getElementById(id).classList.add('active'); 
         
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
-        // Đã cập nhật lại Index map do có thêm 1 Tab ở giữa
         const idx = {'tab-home':0,'tab-report':1,'tab-input':2,'tab-history':3,'tab-invest':4,'tab-manage':5}[id]; 
         document.querySelectorAll('.nav-item')[idx].classList.add('active'); 
         
@@ -591,10 +636,6 @@
         element.animationId = window.requestAnimationFrame(step);
     }
 
-    // ===============================================
-    // CÁC HÀM GIAO TIẾP DỮ LIỆU BẰNG API FETCH
-    // ===============================================
-
     function loadData() { 
         let fetchId = ++currentFetchId; 
         
@@ -608,6 +649,8 @@
             if (fetchId !== currentFetchId) return;
             if (JSON.stringify(res) === localStorage.getItem('meowFinCache')) return;
 
+            if (!res.goldRecords) res.goldRecords = []; 
+
             GLOBAL_DATA = res; 
             localStorage.setItem('meowFinCache', JSON.stringify(res));
             renderDashboard(res, false); 
@@ -615,13 +658,41 @@
     }
 
     function saveData() { 
+        const type = document.querySelector('input[name="type"]:checked').value;
+        
+        if (type === 'Vang') {
+            const w = document.getElementById('inpGoldWeight').value;
+            const u = document.getElementById('inpGoldUnit').value;
+            const p = document.getElementById('inpGoldPrice').value.replace(/\./g, '');
+            if(!w || !p) return Swal.fire({title:'Nhập thiếu thông tin!', icon:'warning', confirmButtonColor:'#ffc107'});
+            
+            showLoadingBonk('Đang lưu giao dịch vàng...');
+            let payload = {
+                date: document.getElementById('inpDate').value,
+                weight: w,
+                unit: u,
+                buyPrice: p,
+                note: document.getElementById('inpNote').value
+            };
+            
+            callGoogleApi('addGoldTransaction', payload).then(() => {
+                Swal.close();
+                document.getElementById('inpGoldWeight').value='';
+                document.getElementById('inpGoldPrice').value='';
+                document.getElementById('inpNote').value='';
+                switchTab('tab-home', document.querySelectorAll('.nav-item')[0]);
+                loadData();
+            });
+            return;
+        }
+
         const amt = document.getElementById('inpAmount').value.replace(/\./g, ''); 
         if(!amt) return Swal.fire({title:'Thiếu số tiền!', icon:'warning', confirmButtonColor:'#ffc107'}); 
         showLoadingBonk('Đang lưu...'); 
         
         const payload = { 
             date:document.getElementById('inpDate').value, 
-            type:document.querySelector('input[name="type"]:checked').value, 
+            type:type, 
             category:document.getElementById('inpCategory').value, 
             amount:amt, 
             note:document.getElementById('inpNote').value, 
@@ -633,7 +704,7 @@
             Swal.close(); 
             document.getElementById('inpAmount').value=''; 
             document.getElementById('inpNote').value=''; 
-            switchTab('tab-home'); 
+            switchTab('tab-home', document.querySelectorAll('.nav-item')[0]); 
             loadData(); 
         }); 
     }
@@ -864,13 +935,49 @@
     }
 
     function renderDashboard(data, isFromCache) {
+        let goldTotalValue = 0;
+        let tbodyGold = '';
+        if (data.goldRecords && data.goldRecords.length > 0) {
+            document.getElementById('ui-gold-ledger').style.display = 'block';
+            data.goldRecords.forEach((g, i) => {
+                let w = parseFloat(g.weight);
+                let wChi = w;
+                if(g.unit === 'Phân') wChi = w / 10;
+                if(g.unit === 'Lượng') wChi = w * 10;
+                
+                let currentVal = wChi * CURRENT_GOLD_PRICE;
+                goldTotalValue += currentVal;
+                
+                let colorClass = CURRENT_GOLD_PRICE >= g.buyPrice ? 'text-success' : 'text-danger';
+                let priceDisplay = CURRENT_GOLD_PRICE > 0 ? CURRENT_GOLD_PRICE.toLocaleString('vi-VN') : 'Đang lấy...';
+                
+                tbodyGold += `
+                  <tr>
+                    <td>${i+1}</td>
+                    <td>${w}</td>
+                    <td>${g.unit}</td>
+                    <td>${Number(g.buyPrice).toLocaleString('vi-VN')}</td>
+                    <td class="${colorClass} fw-bold">${priceDisplay}</td>
+                  </tr>`;
+            });
+            document.getElementById('tbody-gold').innerHTML = tbodyGold;
+        } else {
+            document.getElementById('ui-gold-ledger').style.display = 'none';
+        }
+
+        let displayTotal = Number(data.total || 0) + goldTotalValue;
+        if (data.balances && data.balances['Gold']) {
+            displayTotal -= Number(data.balances['Gold']);
+        }
+
         const totalEl = document.getElementById('ui-total');
         totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
-        if (isFromCache) document.getElementById('anim-total').innerText = Number(data.total).toLocaleString('vi-VN');
-        else animateMoney(document.getElementById('anim-total'), Number(data.total), 600);
+        if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
+        else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
         
         let h = ''; 
         data.funds.forEach((f, idx) => { 
+            if (f === 'Gold') return; 
             h += `<div class="card-box d-flex justify-content-between py-3">
                     <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
                     <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
@@ -879,7 +986,9 @@
         document.getElementById('ui-funds-list').innerHTML = h; 
         
         data.funds.forEach((f, idx) => {
+            if (f === 'Gold') return; 
             const el = document.getElementById(`anim-fund-${idx}`);
+            if(!el) return;
             const val = Number(data.balances[f] || 0);
             if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
             else animateMoney(el, val, 1000 + (idx * 200));
@@ -992,9 +1101,19 @@
     }
 
     function toggleMode() { 
-        const is = document.querySelector('input[name="type"]:checked').value === 'Chuyen'; 
-        document.getElementById('divToFund').style.display = is?'block':'none'; 
-        document.getElementById('divCategory').style.display = is?'none':'block'; 
+        const type = document.querySelector('input[name="type"]:checked').value; 
+        const isChuyen = type === 'Chuyen'; 
+        const isVang = type === 'Vang';
+        
+        document.getElementById('divToFund').style.display = isChuyen ? 'block' : 'none'; 
+        document.getElementById('divCategory').style.display = (isChuyen || isVang) ? 'none' : 'block'; 
+        
+        document.getElementById('divStandardFunds').style.display = isVang ? 'none' : 'flex';
+        document.getElementById('divAmount').style.display = isVang ? 'none' : 'block';
+        document.getElementById('divGold').style.display = isVang ? 'block' : 'none';
+
+        // Đổi nhãn Ngày nhập cho rõ ràng
+        document.getElementById('lblDate').innerText = isVang ? 'Ngày nhập Vàng (có thể chọn ngày quá khứ)' : 'Ngày giao dịch';
     }
 
     function calcWithdraw() { 
@@ -1013,7 +1132,7 @@
     }
 
     // ===============================================
-    // CÁC HÀM CHO TÍNH NĂNG BIỂU ĐỒ VÀNG (MỚI THÊM)
+    // CÁC HÀM CHO TÍNH NĂNG BIỂU ĐỒ VÀNG
     // ===============================================
 
     async function fetchGoldData(period) {
@@ -1055,6 +1174,12 @@
         try {
             goldData1Year = await fetchGoldData('1y');
             document.getElementById('gold-status').innerText = "Cập nhật thành công lúc: " + new Date().toLocaleTimeString();
+            
+            if(goldData1Year.length > 0) {
+                CURRENT_GOLD_PRICE = goldData1Year[goldData1Year.length - 1].buy;
+                if(GLOBAL_DATA.funds) renderDashboard(GLOBAL_DATA, true);
+            }
+
             changeGoldTimeframe(30, document.getElementById('gold-btn-30'));
         } catch (error) {
             console.error("Lỗi Vàng:", error);
