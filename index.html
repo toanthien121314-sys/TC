@@ -947,11 +947,13 @@
     function renderDashboard(data, isFromCache) {
         let goldTotalValue = 0;
         let tbodyGold = '';
+        
+        // 1. RENDER BẢNG VÀNG
         if (data.goldRecords && data.goldRecords.length > 0) {
             document.getElementById('ui-gold-ledger').style.display = 'block';
             data.goldRecords.forEach((g, i) => {
-                let w = parseFloat(g.weight);
-                let totalBuyPrice = parseFloat(g.buyPrice);
+                let w = parseFloat(g.weight) || 0;
+                let totalBuyPrice = parseFloat(g.buyPrice) || 0;
                 
                 let currentUnitPrice = 0;
                 if (g.unit === 'Lượng') currentUnitPrice = CURRENT_GOLD_PRICE;
@@ -966,20 +968,17 @@
                 let colorClass = profitAmount >= 0 ? 'text-success' : 'text-danger';
                 let sign = profitAmount > 0 ? '+' : '';
 
-                // Cột Tổng vốn: Tổng ở trên, Đơn giá ở dưới
                 let buyUnitPrice = w > 0 ? (totalBuyPrice / w) : 0;
                 let buyCellHtml = `
                     <div class="fw-bold text-dark">${totalBuyPrice.toLocaleString('vi-VN')}</div>
                     <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(buyUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
                 `;
 
-                // Cột Giá mới: Tổng ở trên, Đơn giá ở dưới
                 let newPriceCellHtml = currentUnitPrice > 0 ? `
                     <div class="fw-bold text-dark">${Math.round(totalCurrentVal).toLocaleString('vi-VN')}</div>
                     <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(currentUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
                 ` : 'Đang lấy...';
 
-                // Cột Lãi/Lỗ riêng biệt: Tiền ở trên, Phần trăm ở dưới
                 let profitCellHtml = currentUnitPrice > 0 ? `
                     <div class="${colorClass} fw-bold">${sign}${Math.round(profitAmount).toLocaleString('vi-VN')}</div>
                     <div class="${colorClass} fw-normal mt-1" style="font-size: 0.7rem;">${sign}${profitPercent.toFixed(2)}%</div>
@@ -998,8 +997,8 @@
             document.getElementById('ui-gold-ledger').style.display = 'none';
         }
 
+        // 2. TÍNH TỔNG TÀI SẢN (Bảo vệ lỗi NaN)
         let displayTotal = Number(data.total || 0) + goldTotalValue;
-        // Loại trừ rủi ro bị cộng dồn nếu backend vẫn đang trả về quỹ tĩnh tên 'Gold'
         if (data.balances && data.balances['Gold']) {
             displayTotal -= Number(data.balances['Gold']);
         }
@@ -1009,35 +1008,62 @@
         if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
         else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
         
+        // 3. RENDER DANH SÁCH QUỸ
         let h = ''; 
-        data.funds.forEach((f, idx) => { 
-            if (f === 'Gold') return; // Không hiển thị Quỹ Gold tĩnh nữa
-            h += `<div class="card-box d-flex justify-content-between py-3">
-                    <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
-                    <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
-                  </div>`; 
-        }); 
+        if(data.funds) {
+            data.funds.forEach((f, idx) => { 
+                if (f === 'Gold') return; 
+                h += `<div class="card-box d-flex justify-content-between py-3">
+                        <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
+                        <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
+                      </div>`; 
+            }); 
+        }
         document.getElementById('ui-funds-list').innerHTML = h; 
         
-        data.funds.forEach((f, idx) => {
-            if (f === 'Gold') return; 
-            const el = document.getElementById(`anim-fund-${idx}`);
-            if(!el) return;
-            const val = Number(data.balances[f] || 0);
-            if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
-            else animateMoney(el, val, 1000 + (idx * 200));
-        });
+        if(data.funds) {
+            data.funds.forEach((f, idx) => {
+                if (f === 'Gold') return; 
+                const el = document.getElementById(`anim-fund-${idx}`);
+                if(!el) return;
+                const val = Number(data.balances[f] || 0);
+                if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
+                else animateMoney(el, val, 1000 + (idx * 200));
+            });
+        }
+        
+        // 4. CHẠY CÁC THÀNH PHẦN KHÁC
+        renderHistoryList(); 
+        
+        let fO = data.funds ? data.funds.map(f => `<option value="${f}">${f}</option>`).join('') : ''; 
+        document.getElementById('inpFundSource').innerHTML = fO; 
+        document.getElementById('inpFundDest').innerHTML = fO; 
+        
+        const currentRepFund = document.getElementById('reportFundFilter').value;
+        document.getElementById('reportFundFilter').innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
+        if(data.funds && data.funds.includes(currentRepFund)) document.getElementById('reportFundFilter').value = currentRepFund;
+
+        document.getElementById('inpCategory').innerHTML = data.categories ? data.categories.map(c => `<option value="${c}">${c}</option>`).join('') : ''; 
+
+        const rL = (a, n, c) => a ? a.map(i => `<li class="list-group-item d-flex justify-content-between px-0 border-0">${i}<i class="bi bi-trash text-${c}" onclick="${n}('${i}')"></i></li>`).join('') : ''; 
+        document.getElementById('listCat').innerHTML = rL(data.categories, 'delCat', 'danger'); 
+        document.getElementById('listFund').innerHTML = rL(data.funds, 'delFund', 'primary'); 
+
+        if(document.getElementById('tab-report').classList.contains('active')) renderCharts(); 
+    }
         
         function renderHistoryList() { 
-        // 1. Gộp dữ liệu Lịch sử thường và Lịch sử Mua Vàng lại với nhau
+        if(!GLOBAL_DATA.history) return; // Bảo vệ nếu mất dữ liệu
+        
         let combinedData = [...GLOBAL_DATA.history];
 
         if (GLOBAL_DATA.goldRecords && GLOBAL_DATA.goldRecords.length > 0) {
             GLOBAL_DATA.goldRecords.forEach(g => {
-                let ts = new Date(g.date).getTime();
-                // Sửa lại format ngày cho đồng nhất (dd/mm/yyyy)
-                let dParts = g.date.split('-');
-                let dateStr = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : g.date;
+                let dateVal = g.date || '';
+                let ts = dateVal ? new Date(dateVal).getTime() : new Date().getTime();
+                
+                let dParts = dateVal.split('-');
+                let dateStr = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : dateVal;
 
                 combinedData.push({
                     timestamp: ts,
@@ -1045,13 +1071,12 @@
                     type: 'Vang', 
                     category: `Mua Vàng (${g.weight} ${g.unit})`,
                     note: g.note || '',
-                    amount: g.buyPrice, // Tiền đã chi ra để mua
-                    isGold: true // Cờ đánh dấu để không hiển thị nút Xóa (vì API xóa vàng cần làm riêng)
+                    amount: g.buyPrice,
+                    isGold: true
                 });
             });
         }
 
-        // 2. Lọc theo thời gian và Sắp xếp mới nhất lên đầu
         const f = combinedData
             .filter(i => isDateInRange(i.timestamp, CURRENT_HIST_FILTER, 'histStart', 'histEnd'))
             .sort((a, b) => b.timestamp - a.timestamp); 
@@ -1066,9 +1091,8 @@
 
             if (h.type === 'Thu') { valClass = 'money-inc'; sign = '+'; }
             else if (h.type === 'Chi') { valClass = 'money-exp'; sign = '-'; }
-            else if (h.type === 'Vang') { valClass = 'text-warning'; sign = '-'; iconTitle = '<i class="bi bi-stars text-warning me-1"></i>'; } // Vàng hiển thị như một khoản tiền xuất ra
+            else if (h.type === 'Vang') { valClass = 'text-warning'; sign = '-'; iconTitle = '<i class="bi bi-stars text-warning me-1"></i> '; }
 
-            // Hiện nút xóa cho giao dịch thường
             if (!h.isGold) {
                 delBtn = `<i class="bi bi-trash3 text-danger opacity-50 ms-2" style="cursor:pointer;" onclick="delTx(${h.rowIndex})"></i>`;
             }
@@ -1081,13 +1105,15 @@
                         <small class="text-muted">${h.dateStr}${h.note?` • ${h.note}`:''}</small>
                     </div>
                     <div class="text-end d-flex align-items-center">
-                        <div class="${valClass} fs-6 fw-bold">${sign}${Number(h.amount).toLocaleString()}</div>
+                        <div class="${valClass} fs-6 fw-bold">${sign}${Number(h.amount).toLocaleString('vi-VN')} đ</div>
                         ${delBtn}
                     </div>
                 </div>
             </div>`; 
         }); 
-        document.getElementById('ui-history-list').innerHTML = hH; 
+        
+        const historyListEl = document.getElementById('ui-history-list');
+        if(historyListEl) historyListEl.innerHTML = hH; 
     }
 
     function renderHistoryList() { 
