@@ -951,41 +951,53 @@
             document.getElementById('ui-gold-ledger').style.display = 'block';
             data.goldRecords.forEach((g, i) => {
                 let w = parseFloat(g.weight);
-                let totalBuyPrice = parseFloat(g.buyPrice); // Đây là TỔNG SỐ TIỀN người dùng đã nhập
+                let totalBuyPrice = parseFloat(g.buyPrice);
                 
-                // 1. Tính giá MỚI của 1 đơn vị tương ứng (Từ API Simplize)
+                // 1. Tính giá MỚI của 1 đơn vị
                 let currentUnitPrice = 0;
                 if (g.unit === 'Lượng') currentUnitPrice = CURRENT_GOLD_PRICE;
                 else if (g.unit === 'Chỉ') currentUnitPrice = CURRENT_GOLD_PRICE / 10;
                 else if (g.unit === 'Phân') currentUnitPrice = CURRENT_GOLD_PRICE / 100;
                 
-                // 2. Tính TỔNG GIÁ TRỊ HIỆN TẠI của bản ghi
+                // 2. Tính TỔNG GIÁ TRỊ HIỆN TẠI
                 let totalCurrentVal = w * currentUnitPrice;
-                goldTotalValue += totalCurrentVal; // Cộng tổng vào tài sản chung
+                goldTotalValue += totalCurrentVal;
                 
-                // 3. So sánh TỔNG HIỆN TẠI và TỔNG VỐN MUA để tô màu (Lời/Lỗ)
-                let colorClass = totalCurrentVal >= totalBuyPrice ? 'text-success' : 'text-danger';
+                // 3. Tính toán Lời / Lỗ
+                let profitAmount = totalCurrentVal - totalBuyPrice;
+                let profitPercent = totalBuyPrice > 0 ? (profitAmount / totalBuyPrice) * 100 : 0;
                 
-                // 4. Định dạng hiển thị Cột Tổng vốn (Gồm Tổng vốn to ở trên, giá mua 1 đơn vị nhỏ ở dưới)
+                // 4. Định dạng màu sắc và dấu (+/-)
+                let colorClass = profitAmount >= 0 ? 'text-success' : 'text-danger';
+                let sign = profitAmount > 0 ? '+' : (profitAmount < 0 ? '-' : '');
+                let profitText = profitAmount !== 0 ? 
+                    `${sign}${Math.abs(Math.round(profitAmount)).toLocaleString('vi-VN')} đ (${sign}${Math.abs(profitPercent).toFixed(2)}%)` : 
+                    `Hòa vốn`;
+                
+                // 5. Cột Tổng vốn: Tổng ở trên, Đơn giá ở dưới
                 let buyUnitPrice = w > 0 ? (totalBuyPrice / w) : 0;
                 let buyCellHtml = `
-                    <div class="fw-bold">${totalBuyPrice.toLocaleString('vi-VN')}</div>
+                    <div class="fw-bold text-dark">${totalBuyPrice.toLocaleString('vi-VN')}</div>
                     <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(buyUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
                 `;
 
-                // 5. Định dạng hiển thị Cột Giá mới (Gồm Giá mới 1 đv to ở trên, Tổng trị giá mới nhỏ ở dưới)
+                // 6. Cột Giá mới: Tổng ở trên, Đơn giá ở dưới, có thêm nhãn Lời/Lỗ
                 let newPriceCellHtml = currentUnitPrice > 0 ? `
-                    <div>${currentUnitPrice.toLocaleString('vi-VN')}</div>
-                    <div class="fw-normal mt-1" style="font-size: 0.7rem;">Tổng: ${Math.round(totalCurrentVal).toLocaleString('vi-VN')} đ</div>
+                    <div class="fw-bold ${colorClass}">${Math.round(totalCurrentVal).toLocaleString('vi-VN')}</div>
+                    <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(currentUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
+                    <div class="${colorClass} fw-bold mt-1" style="font-size: 0.7rem; background-color: ${profitAmount >= 0 ? 'rgba(25, 135, 84, 0.1)' : 'rgba(220, 53, 69, 0.1)'}; padding: 2px 5px; border-radius: 4px; display: inline-block;">
+                        ${profitText}
+                    </div>
                 ` : 'Đang lấy...';
 
+                // Bỏ bớt class màu ở thẻ <td> để các <div> bên trong tự control màu
                 tbodyGold += `
-                  <tr>
+                  <tr style="vertical-align: middle;">
                     <td>${i+1}</td>
                     <td>${w}</td>
                     <td>${g.unit}</td>
                     <td>${buyCellHtml}</td>
-                    <td class="${colorClass} fw-bold">${newPriceCellHtml}</td>
+                    <td>${newPriceCellHtml}</td>
                   </tr>`;
             });
             document.getElementById('tbody-gold').innerHTML = tbodyGold;
