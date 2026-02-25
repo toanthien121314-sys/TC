@@ -154,7 +154,7 @@
       align-items: center; 
     }
     .nav-item { 
-      text-align: center; color: #b0b0b0; font-size: 0.75rem; 
+      text-align: center; color: #b0b0b0; font-size: 0.70rem; /* Thu nhỏ xíu để nhét vừa 6 tab */
       cursor: pointer; 
       flex: 1; 
       display: flex; 
@@ -225,6 +225,34 @@
       50% { transform: translateX(-50%) scale(1.05); }
       100% { transform: translateX(-50%) scale(1); }
     }
+
+    /* --- GIAO DIỆN BIỂU ĐỒ VÀNG TÍCH HỢP --- */
+    .time-filters {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap; 
+    }
+    .gold-filter-btn {
+      background-color: #f0f0f0;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #555;
+      transition: all 0.2s ease;
+      font-size: 13px;
+    }
+    .gold-filter-btn:hover {
+      background-color: #e0e0e0;
+    }
+    .gold-filter-btn.active {
+      background-color: #ffc107;
+      color: #000;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -243,6 +271,9 @@
       </div>
       <div class="nav-item" onclick="switchTab('tab-history', this)">
         <i class="bi bi-clock-history fs-4"></i><span>Lịch sử</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-invest', this)">
+        <i class="bi bi-graph-up-arrow fs-4"></i><span>Đầu tư</span>
       </div>
       <div class="nav-item" onclick="switchTab('tab-manage', this)">
         <i class="bi bi-sliders fs-4"></i><span>Cài đặt</span>
@@ -369,6 +400,28 @@
           </div>
         </div>
 
+        <div id="tab-invest" class="tab-content">
+          <h5 class="fw-bold mb-3 mt-4 ps-2">Thị trường Vàng</h5>
+          
+          <div class="card-box text-center">
+            <h6 id="gold-chart-title" class="fw-bold text-warning mb-2">Biểu Đồ Giá Vàng SJC (1 Tháng)</h6>
+            <div id="gold-status" class="text-muted small mb-3 fst-italic">Đang kết nối để lấy dữ liệu mới nhất...</div>
+            
+            <div class="time-filters">
+              <button id="gold-btn-7" onclick="changeGoldTimeframe(7, this)" class="gold-filter-btn">7 Ngày</button>
+              <button id="gold-btn-30" onclick="changeGoldTimeframe(30, this)" class="gold-filter-btn active">1 Tháng</button>
+              <button id="gold-btn-90" onclick="changeGoldTimeframe(90, this)" class="gold-filter-btn">3 Tháng</button>
+              <button id="gold-btn-180" onclick="changeGoldTimeframe(180, this)" class="gold-filter-btn">6 Tháng</button>
+              <button id="gold-btn-365" onclick="changeGoldTimeframe(365, this)" class="gold-filter-btn">1 Năm</button>
+              <button id="gold-btn-all" onclick="changeGoldTimeframe('all', this)" class="gold-filter-btn">Tất cả</button>
+            </div>
+            
+            <div class="chart-wrapper">
+              <canvas id="goldChart"></canvas>
+            </div>
+          </div>
+        </div>
+
         <div id="tab-manage" class="tab-content">
           <h5 class="fw-bold mb-3 mt-4 ps-2">Cài đặt</h5>
           <div class="card-box">
@@ -411,6 +464,11 @@
     const PIE_COLORS = ['#ffc107', '#fd7e14', '#dc3545', '#e83e8c', '#6f42c1', '#0d6efd', '#0dcaf0', '#198754', '#20c997', '#6c757d'];
     let currentFetchId = 0;
 
+    // --- BIẾN TOÀN CỤC CHO BIỂU ĐỒ VÀNG ---
+    let goldChartInstance = null;
+    let goldData1Year = []; 
+    let goldDataAll = [];   
+
     // --- PWA INSTALL LOGIC ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
@@ -432,8 +490,6 @@
    // --- HÀM LÕI GỌI API (Đã thêm thời gian chờ tối thiểu) ---
     async function callGoogleApi(action, payload = null) {
         try {
-            // Cài đặt thời gian hiển thị tối thiểu (1500ms = 1.5 giây)
-            // Bạn có thể tăng lên 2000 (2 giây) nếu muốn xem chú chó gõ lâu hơn
             const minDelay = new Promise(resolve => setTimeout(resolve, 5000)); 
             
             const apiCall = fetch(API_URL, {
@@ -442,7 +498,6 @@
                 body: JSON.stringify({ action: action, payload: payload })
             }).then(res => res.json());
 
-            // Dùng Promise.all để bắt buộc chờ cả API gọi xong VÀ đủ thời gian Delay tối thiểu
             const [result] = await Promise.all([apiCall, minDelay]);
 
             if (result.status === 'success') return result.data;
@@ -454,7 +509,6 @@
         }
     }
 
-    // --- HÀM HIỂN THỊ LOADING BONK MỚI ---
     function showLoadingBonk(text = 'Đang xử lý...') {
         Swal.fire({
             title: text,
@@ -489,10 +543,8 @@
             } catch (e) { console.error("Lỗi đọc cache"); }
         }
         
-        // Chạy ngầm gọi API mạng
         loadData(); 
         
-        // Thiết lập ngày tháng mặc định
         document.getElementById('inpDate').valueAsDate = new Date(); 
         const d = new Date();
         const f = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
@@ -501,6 +553,9 @@
             if(id.includes('Start')) document.getElementById(id).value = f; 
             else document.getElementById(id).value = t; 
         }); 
+
+        // Khởi động biểu đồ vàng ngầm
+        initGoldChart();
     }
 
     function switchTab(id, el) { 
@@ -508,7 +563,8 @@
         document.getElementById(id).classList.add('active'); 
         
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
-        const idx = {'tab-home':0,'tab-report':1,'tab-input':2,'tab-history':3,'tab-manage':4}[id]; 
+        // Đã cập nhật lại Index map do có thêm 1 Tab ở giữa
+        const idx = {'tab-home':0,'tab-report':1,'tab-input':2,'tab-history':3,'tab-invest':4,'tab-manage':5}[id]; 
         document.querySelectorAll('.nav-item')[idx].classList.add('active'); 
         
         if (id === 'tab-report') renderCharts(); 
@@ -550,7 +606,7 @@
 
         callGoogleApi('getAppData').then(res => { 
             if (fetchId !== currentFetchId) return;
-            if (JSON.stringify(res) === localStorage.getItem('meowFinCache')) return; // Không đổi thì không vẽ lại
+            if (JSON.stringify(res) === localStorage.getItem('meowFinCache')) return;
 
             GLOBAL_DATA = res; 
             localStorage.setItem('meowFinCache', JSON.stringify(res));
@@ -594,7 +650,6 @@
         }); 
     }
 
-    // --- CÁC HÀM QUẢN LÝ QUỸ & DANH MỤC ---
     function addCat() { Swal.fire({title:'Thêm danh mục', input:'text', showCancelButton:true}).then(r => { if(r.value) { showLoadingBonk('Đang lưu...'); callGoogleApi('addCategory', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
     function addFund() { Swal.fire({title:'Thêm quỹ', input:'text', showCancelButton:true}).then(r => { if(r.value) { showLoadingBonk('Đang lưu...'); callGoogleApi('createFund', r.value).then(()=>{ Swal.close(); loadData(); }); } }); }
     
@@ -616,7 +671,6 @@
         }); 
     }
 
-    // --- TÍNH NĂNG NÉN BỘ NHỚ ---
     function showCompressionMenu() {
       Swal.fire({
         title: 'Nén dữ liệu',
@@ -809,10 +863,6 @@
       });
     }
 
-    // ===============================================
-    // CÁC HÀM VẼ GIAO DIỆN CHÍNH
-    // ===============================================
-
     function renderDashboard(data, isFromCache) {
         const totalEl = document.getElementById('ui-total');
         totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
@@ -961,6 +1011,179 @@
             } 
         }); 
     }
+
+    // ===============================================
+    // CÁC HÀM CHO TÍNH NĂNG BIỂU ĐỒ VÀNG (MỚI THÊM)
+    // ===============================================
+
+    async function fetchGoldData(period) {
+        document.getElementById('gold-status').innerText = "Đang tải dữ liệu...";
+        const [resBuy, resSell] = await Promise.all([
+            fetch(`https://api2.simplize.vn/api/historical/prices/chart?ticker=SJC:M1C:BUY&period=${period}`),
+            fetch(`https://api2.simplize.vn/api/historical/prices/chart?ticker=SJC:M1C:SELL&period=${period}`)
+        ]);
+
+        const jsonBuy = await resBuy.json();
+        const jsonSell = await resSell.json();
+
+        const dataBuy = jsonBuy.data;
+        const dataSell = jsonSell.data;
+
+        let processedData = [];
+
+        for (let i = 0; i < dataBuy.length; i++) {
+            let timestamp = dataBuy[i][0] * 1000; 
+            let dateObj = new Date(timestamp);
+            let ngay = ("0" + dateObj.getDate()).slice(-2);
+            let thang = ("0" + (dateObj.getMonth() + 1)).slice(-2);
+            let nam = dateObj.getFullYear(); 
+            
+            let dateStr = `${ngay}/${thang}/${nam}`;
+            let giaMua = dataBuy[i][4];
+            let giaBan = dataSell[i][4]; 
+
+            processedData.push({
+                date: dateStr,
+                buy: giaMua,
+                sell: giaBan
+            });
+        }
+        return processedData;
+    }
+
+    async function initGoldChart() {
+        try {
+            goldData1Year = await fetchGoldData('1y');
+            document.getElementById('gold-status').innerText = "Cập nhật thành công lúc: " + new Date().toLocaleTimeString();
+            changeGoldTimeframe(30, document.getElementById('gold-btn-30'));
+        } catch (error) {
+            console.error("Lỗi Vàng:", error);
+            document.getElementById('gold-status').innerText = "Lỗi kết nối dữ liệu: " + error.message;
+        }
+    }
+
+    async function changeGoldTimeframe(days, btnElement) {
+        document.querySelectorAll('.gold-filter-btn').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
+
+        const titleMap = {7: '7 Ngày', 30: '1 Tháng', 90: '3 Tháng', 180: '6 Tháng', 365: '1 Năm', 'all': 'Tất cả'};
+        document.getElementById('gold-chart-title').innerText = `Biểu Đồ Giá Vàng SJC (${titleMap[days]})`;
+
+        let dataToDraw = [];
+        
+        if (days === 'all') {
+            if (goldDataAll.length === 0) {
+                try {
+                    goldDataAll = await fetchGoldData('all');
+                    document.getElementById('gold-status').innerText = "Cập nhật thành công lúc: " + new Date().toLocaleTimeString();
+                } catch(error) {
+                    document.getElementById('gold-status').innerText = "Lỗi kết nối: " + error.message;
+                    return;
+                }
+            }
+            dataToDraw = goldDataAll;
+        } else {
+            let batDauTu = Math.max(0, goldData1Year.length - days);
+            dataToDraw = goldData1Year.slice(batDauTu);
+        }
+
+        drawGoldChart(dataToDraw);
+    }
+
+    function drawGoldChart(data) {
+        const ctx = document.getElementById('goldChart').getContext('2d');
+        
+        const labels = data.map(item => {
+            if (data.length > 180) {
+                return item.date; 
+            } else {
+                return item.date.substring(0, 5); 
+            }
+        });
+
+        const buyData = data.map(item => item.buy);
+        const sellData = data.map(item => item.sell);
+
+        let lineThickness = data.length > 365 ? 1 : (data.length > 90 ? 1.5 : 2.5);
+
+        if(goldChartInstance) {
+            goldChartInstance.destroy();
+        }
+
+        goldChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Bán ra',
+                        data: sellData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: lineThickness,
+                        pointRadius: 0,         
+                        pointHoverRadius: 6,    
+                        tension: 0.2 
+                    },
+                    {
+                        label: 'Mua vào',
+                        data: buyData,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: lineThickness,
+                        pointRadius: 0,         
+                        pointHoverRadius: 6,    
+                        tension: 0.2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return (value / 1000000) + ' Tr';
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 12 
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                let index = context[0].dataIndex;
+                                return data[index].date;
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
   </script>
 </body>
 </html>
