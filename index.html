@@ -304,7 +304,7 @@
                 <div class="table-responsive bg-white rounded-3 border">
                   <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size: 0.75rem;">
                     <thead class="table-light">
-                      <tr><th>STT</th><th>KL</th><th>Đ.Vị</th><th>Giá mua</th><th>Giá mới</th></tr>
+                      <tr><th>STT</th><th>KL</th><th>Đ.Vị</th><th>Tổng vốn</th><th>Giá mới</th></tr>
                     </thead>
                     <tbody id="tbody-gold"></tbody>
                   </table>
@@ -400,9 +400,9 @@
                  </div>
                </div>
                <div class="mb-0">
-                 <label class="small fw-bold text-dark mb-1">Giá nhập / 1 đơn vị (VNĐ)</label>
+                 <label class="small fw-bold text-dark mb-1">Tổng tiền mua (VNĐ)</label>
                  <input type="text" class="form-control text-warning fw-bold fs-5" id="inpGoldPrice" placeholder="VD: 7.450.000" inputmode="numeric">
-                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập đúng giá tại thời điểm mua để hệ thống tính toán Lời/Lỗ chính xác.</small>
+                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập tổng số tiền bạn đã thanh toán cho khối lượng trên.</small>
                </div>
             </div>
 
@@ -951,34 +951,41 @@
             document.getElementById('ui-gold-ledger').style.display = 'block';
             data.goldRecords.forEach((g, i) => {
                 let w = parseFloat(g.weight);
+                let totalBuyPrice = parseFloat(g.buyPrice); // Đây là TỔNG SỐ TIỀN người dùng đã nhập
                 
-                // 1. Tính giá mới của 1 đơn vị tương ứng (Vì API trả về giá 1 Lượng)
-                let unitPrice = 0;
-                if (g.unit === 'Lượng') unitPrice = CURRENT_GOLD_PRICE;
-                else if (g.unit === 'Chỉ') unitPrice = CURRENT_GOLD_PRICE / 10;
-                else if (g.unit === 'Phân') unitPrice = CURRENT_GOLD_PRICE / 100;
+                // 1. Tính giá MỚI của 1 đơn vị tương ứng (Từ API Simplize)
+                let currentUnitPrice = 0;
+                if (g.unit === 'Lượng') currentUnitPrice = CURRENT_GOLD_PRICE;
+                else if (g.unit === 'Chỉ') currentUnitPrice = CURRENT_GOLD_PRICE / 10;
+                else if (g.unit === 'Phân') currentUnitPrice = CURRENT_GOLD_PRICE / 100;
                 
-                // 2. Tính TỔNG giá trị thực tế của bản ghi (Số lượng * Giá 1 đơn vị)
-                let currentVal = w * unitPrice;
-                goldTotalValue += currentVal; // Cộng vào tổng tài sản
+                // 2. Tính TỔNG GIÁ TRỊ HIỆN TẠI của bản ghi
+                let totalCurrentVal = w * currentUnitPrice;
+                goldTotalValue += totalCurrentVal; // Cộng tổng vào tài sản chung
                 
-                // 3. So sánh Giá mua 1 đơn vị và Giá mới 1 đơn vị để tô màu (Lời/Lỗ)
-                let colorClass = unitPrice >= g.buyPrice ? 'text-success' : 'text-danger';
-                let priceDisplay = unitPrice > 0 ? unitPrice.toLocaleString('vi-VN') : 'Đang lấy...';
+                // 3. So sánh TỔNG HIỆN TẠI và TỔNG VỐN MUA để tô màu (Lời/Lỗ)
+                let colorClass = totalCurrentVal >= totalBuyPrice ? 'text-success' : 'text-danger';
                 
-                // Hiển thị thêm dòng "Tổng" nhỏ ở dưới để quan sát được toàn bộ giá trị
-                let totalDisplayHtml = unitPrice > 0 ? `<div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">Tổng: ${Math.round(currentVal).toLocaleString('vi-VN')} đ</div>` : '';
+                // 4. Định dạng hiển thị Cột Tổng vốn (Gồm Tổng vốn to ở trên, giá mua 1 đơn vị nhỏ ở dưới)
+                let buyUnitPrice = w > 0 ? (totalBuyPrice / w) : 0;
+                let buyCellHtml = `
+                    <div class="fw-bold">${totalBuyPrice.toLocaleString('vi-VN')}</div>
+                    <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(buyUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
+                `;
+
+                // 5. Định dạng hiển thị Cột Giá mới (Gồm Giá mới 1 đv to ở trên, Tổng trị giá mới nhỏ ở dưới)
+                let newPriceCellHtml = currentUnitPrice > 0 ? `
+                    <div>${currentUnitPrice.toLocaleString('vi-VN')}</div>
+                    <div class="fw-normal mt-1" style="font-size: 0.7rem;">Tổng: ${Math.round(totalCurrentVal).toLocaleString('vi-VN')} đ</div>
+                ` : 'Đang lấy...';
 
                 tbodyGold += `
                   <tr>
                     <td>${i+1}</td>
                     <td>${w}</td>
                     <td>${g.unit}</td>
-                    <td>${Number(g.buyPrice).toLocaleString('vi-VN')}</td>
-                    <td class="${colorClass} fw-bold">
-                        ${priceDisplay}
-                        ${totalDisplayHtml}
-                    </td>
+                    <td>${buyCellHtml}</td>
+                    <td class="${colorClass} fw-bold">${newPriceCellHtml}</td>
                   </tr>`;
             });
             document.getElementById('tbody-gold').innerHTML = tbodyGold;
