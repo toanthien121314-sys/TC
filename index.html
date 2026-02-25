@@ -15,6 +15,8 @@
   <link rel="icon" type="image/png" href="https://toanthien121314-sys.github.io/TC/icon.png">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -31,7 +33,6 @@
       --bg-color: #f8f9fa;
     }
 
-    /* Ép tràn viền 100% để loại bỏ khoảng trắng dư thừa */
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -51,30 +52,25 @@
       user-select: text; 
     }
 
-    /* =========================================
-       2. KHUNG CHỨA APP CHÍNH (Đã tối ưu Toàn màn hình)
-       ========================================= */
     #main-app-container { 
       display: block; 
-      height: 100dvh; /* Dùng dvh thay cho vh */
+      height: 100dvh;
       width: 100vw; 
       position: relative; 
-      padding-top: env(safe-area-inset-top); /* Né tai thỏ trên */
-      padding-bottom: env(safe-area-inset-bottom); /* Né cằm iPhone nếu có */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
       box-sizing: border-box;
     }
 
     .main-scroll-area { 
       height: 100%; 
       overflow-y: auto; 
-      padding-bottom: 90px; /* Tăng khoảng trống để không bị thanh tab che */
+      padding-bottom: 90px;
       padding-top: 10px; 
       -webkit-overflow-scrolling: touch; 
     }
 
-    /* =========================================
-       3. CÁC THÀNH PHẦN UI (COMPONENT)
-       ========================================= */
+    /* HEADER & CARDS */
     .header-balance { 
       background: linear-gradient(135deg, #ffc107, #ffca2c); 
       color: #000; 
@@ -92,6 +88,26 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
       margin-bottom: 12px; 
       padding: 20px; 
+    }
+
+    /* CSS CHO ITEM QUỸ (CÓ HIỆU ỨNG KHI BẤM) */
+    .fund-item {
+      background: #fff;
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      margin-bottom: 12px;
+      padding: 20px;
+      transition: transform 0.1s;
+    }
+    .fund-item:active {
+        transform: scale(0.98);
+        background-color: #f9f9f9;
+    }
+    /* Style đặc biệt cho nút Gold để người dùng biết bấm được */
+    .fund-gold {
+        cursor: pointer;
+        border-left: 5px solid #ffc107;
     }
 
     .btn-main { 
@@ -117,7 +133,7 @@
       box-shadow: none; 
     }
 
-    /* --- HIỆU ỨNG LOADING MƯỢT MÀ --- */
+    /* LOADING DOTS ANIMATION */
     .glowing-dots {
       display: flex;
       justify-content: center;
@@ -143,7 +159,7 @@
     .header-balance .glowing-dots span { background-color: #000; } 
     .container .glowing-dots span { background-color: #000; }
 
-    /* MENU STYLE */
+    /* NAVIGATION BAR */
     .nav-bar { 
       background: #fff; 
       box-shadow: 0 -5px 20px rgba(0,0,0,0.05); 
@@ -154,7 +170,7 @@
       align-items: center; 
     }
     .nav-item { 
-      text-align: center; color: #b0b0b0; font-size: 0.70rem; /* Thu nhỏ xíu để nhét vừa 6 tab */
+      text-align: center; color: #b0b0b0; font-size: 0.70rem;
       cursor: pointer; 
       flex: 1; 
       display: flex; 
@@ -167,15 +183,14 @@
     .nav-item.active { color: #000; font-weight: 700; } 
     .nav-item.active i { color: #f59f00; }
 
-    /* CẤU HÌNH THANH TAB TRÊN MOBILE (Đã ép sát đáy khít sàn) */
     @media (max-width: 991px) { 
       .nav-bar { 
         position: fixed; 
-        bottom: 0 !important; /* Ép sát đáy */
+        bottom: 0 !important;
         left: 0; 
         width: 100%;
-        height: 65px; /* Chiều cao cố định */
-        padding-bottom: 0 !important; /* Xóa khoảng hở */
+        height: 65px;
+        padding-bottom: 0 !important;
         margin-bottom: 0 !important;
         border-top-left-radius: 20px; 
         border-top-right-radius: 20px; 
@@ -200,7 +215,7 @@
     .money-inc { color: #198754; font-weight: 700; } 
     .money-exp { color: #dc3545; font-weight: 700; }
 
-    /* --- NÚT CÀI ĐẶT PWA --- */
+    /* INSTALL PWA BUTTON */
     #install-btn {
       display: none; 
       position: fixed;
@@ -226,7 +241,7 @@
       100% { transform: translateX(-50%) scale(1); }
     }
 
-    /* --- GIAO DIỆN BIỂU ĐỒ VÀNG TÍCH HỢP --- */
+    /* FILTERS FOR GOLD CHART */
     .time-filters {
       margin-bottom: 20px;
       display: flex;
@@ -245,13 +260,24 @@
       transition: all 0.2s ease;
       font-size: 13px;
     }
-    .gold-filter-btn:hover {
-      background-color: #e0e0e0;
-    }
+    .gold-filter-btn:hover { background-color: #e0e0e0; }
     .gold-filter-btn.active {
       background-color: #ffc107;
       color: #000;
       box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+    }
+    
+    /* MODAL STYLE (POPUP VÀNG) */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .modal-header {
+        background-color: #fff8e1; /* Màu vàng nhạt cho đẹp */
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        border-bottom: 1px solid #f0f0f0;
     }
   </style>
 </head>
@@ -298,19 +324,6 @@
               <div id="ui-funds-list">
                 <div class="glowing-dots" style="background:#fff; border-radius:10px;"><span></span><span></span><span></span></div>
               </div>
-              
-              <div id="ui-gold-ledger" class="card-box mt-3" style="display:none; overflow: hidden; padding: 15px;">
-                <h6 class="fw-bold text-warning mb-2"><i class="bi bi-stars"></i> Bảng theo dõi Vàng</h6>
-                <div class="table-responsive bg-white rounded-3 border">
-                  <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size: 0.75rem;">
-                    <thead class="table-light">
-                      <tr><th>STT</th><th>KL</th><th>Đ.Vị</th><th>Giá mua</th><th>Giá mới</th></tr>
-                    </thead>
-                    <tbody id="tbody-gold"></tbody>
-                  </table>
-                </div>
-              </div>
-              
             </div>
           </div>
         </div>
@@ -388,10 +401,10 @@
             
             <div id="divGold" style="display:none;" class="mb-3 p-3 rounded-3" style="background-color: #fff9e6; border: 1px dashed #ffc107;">
                <div class="mb-3">
-                 <label class="small fw-bold text-dark mb-1">Khối lượng (Số lượng)</label>
+                 <label class="small fw-bold text-dark mb-1">Khối lượng</label>
                  <div class="input-group">
                    <input type="number" step="0.01" class="form-control" id="inpGoldWeight" placeholder="VD: 1, 0.5...">
-                   <span class="input-group-text bg-white border-start-0 text-muted" style="border-right: none;">đơn vị:</span>
+                   <span class="input-group-text bg-white border-start-0 text-muted">đơn vị:</span>
                    <select class="form-select border-start-0" id="inpGoldUnit" style="max-width: 100px; background-color: #f8f9fa;">
                      <option value="Chỉ">Chỉ</option>
                      <option value="Phân">Phân</option>
@@ -402,7 +415,6 @@
                <div class="mb-0">
                  <label class="small fw-bold text-dark mb-1">Giá nhập / 1 đơn vị (VNĐ)</label>
                  <input type="text" class="form-control text-warning fw-bold fs-5" id="inpGoldPrice" placeholder="VD: 7.450.000" inputmode="numeric">
-                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập đúng giá tại thời điểm mua để hệ thống tính toán Lời/Lỗ chính xác.</small>
                </div>
             </div>
 
@@ -489,6 +501,44 @@
     </div>
   </div>
 
+  <div class="modal fade" id="goldModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-warning"><i class="bi bi-stars"></i> Danh sách Vàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0 align-middle text-center" style="font-size: 0.85rem;">
+              <thead class="table-warning sticky-top">
+                <tr>
+                  <th>STT</th>
+                  <th>KL</th>
+                  <th>ĐV</th>
+                  <th>Giá mua</th>
+                  <th>Giá mới</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-gold-modal">
+                </tbody>
+            </table>
+          </div>
+          <div class="p-3 bg-light border-top">
+             <div class="d-flex justify-content-between">
+               <span>Tổng khối lượng:</span>
+               <strong id="modal-total-weight">0 Chỉ</strong>
+             </div>
+             <div class="d-flex justify-content-between mt-1">
+               <span>Tổng giá trị HT:</span>
+               <strong class="text-success" id="modal-total-value">0 ₫</strong>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <button id="install-btn"><i class="bi bi-download me-2"></i>CÀI ĐẶT MEOW FIN</button>
 
   <script>
@@ -496,7 +546,7 @@
     // KẾT NỐI API VÀ LƯU ĐỆM CHUYÊN NGHIỆP
     // ===============================================
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbw6GX8KJQ36yvp7joluWsvkYNkzcnKDG2tc0J-ZC5MoD8BCpUYbybjDgtdhaaCkAFE3/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbz4-8qbW9zQ8oq7l4pSmtJT1dkHLOZNGBjTbHCmVBp0wCR9VeRxOuLjnZyKssD7vYzx/exec"; 
 
     // Bổ sung cấu trúc chứa dữ liệu Vàng
     let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{}, goldRecords:[] };
@@ -647,7 +697,6 @@
     function loadData() { 
         let fetchId = ++currentFetchId; 
         
-        // Cố tình ép hiện dấu 3 chấm nếu không có bộ nhớ đệm
         if (!localStorage.getItem('meowFinCache')) {
             const dotsHtml = '<div class="glowing-dots"><span></span><span></span><span></span></div>';
             document.getElementById('ui-total').innerHTML = dotsHtml;
@@ -658,13 +707,110 @@
             if (fetchId !== currentFetchId) return;
             if (JSON.stringify(res) === localStorage.getItem('meowFinCache')) return;
 
-            // Đảm bảo không lỗi nếu backend rỗng
             if (!res.goldRecords) res.goldRecords = []; 
 
             GLOBAL_DATA = res; 
             localStorage.setItem('meowFinCache', JSON.stringify(res));
             renderDashboard(res, false); 
         }); 
+    }
+
+    function renderDashboard(data, isFromCache) {
+        // --- 1. TÍNH TOÁN VÀNG & CHUẨN BỊ CHO MODAL ---
+        let goldTotalValue = 0;
+        let totalGoldWeight = 0;
+        let tbodyGold = '';
+        
+        if (data.goldRecords && data.goldRecords.length > 0) {
+            data.goldRecords.forEach((g, i) => {
+                let w = parseFloat(g.weight);
+                let wChi = w;
+                if(g.unit === 'Phân') wChi = w / 10;
+                if(g.unit === 'Lượng') wChi = w * 10;
+                
+                totalGoldWeight += wChi;
+                let currentVal = wChi * CURRENT_GOLD_PRICE;
+                goldTotalValue += currentVal;
+                
+                let colorClass = CURRENT_GOLD_PRICE >= g.buyPrice ? 'text-success' : 'text-danger';
+                let priceDisplay = CURRENT_GOLD_PRICE > 0 ? CURRENT_GOLD_PRICE.toLocaleString('vi-VN') : 'Đang tải...';
+                
+                // HTML cho từng dòng trong Modal
+                tbodyGold += `
+                  <tr>
+                    <td>${i+1}</td>
+                    <td class="fw-bold">${w}</td>
+                    <td>${g.unit}</td>
+                    <td>${Number(g.buyPrice).toLocaleString('vi-VN')}</td>
+                    <td class="${colorClass} fw-bold">${priceDisplay}</td>
+                  </tr>`;
+            });
+            // Đẩy dữ liệu vào Modal
+            document.getElementById('tbody-gold-modal').innerHTML = tbodyGold;
+            document.getElementById('modal-total-weight').innerText = totalGoldWeight.toFixed(2) + " Chỉ";
+            document.getElementById('modal-total-value').innerText = goldTotalValue.toLocaleString('vi-VN') + " ₫";
+        } else {
+             document.getElementById('tbody-gold-modal').innerHTML = `<tr><td colspan="5" class="py-3 text-muted">Chưa có dữ liệu vàng</td></tr>`;
+        }
+
+        // --- 2. TÍNH TỔNG TÀI SẢN ---
+        let displayTotal = Number(data.total || 0) + goldTotalValue;
+        // Trừ quỹ Gold tĩnh cũ nếu còn tồn tại để tránh cộng dồn
+        if (data.balances && data.balances['Gold']) {
+            displayTotal -= Number(data.balances['Gold']);
+        }
+
+        const totalEl = document.getElementById('ui-total');
+        totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
+        if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
+        else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
+        
+        // --- 3. VẼ DANH SÁCH QUỸ ---
+        let h = ''; 
+        data.funds.forEach((f, idx) => { 
+            if (f === 'Gold') return; // Không vẽ Gold ở đây theo cách thường
+            h += `<div class="fund-item d-flex justify-content-between align-items-center">
+                    <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
+                    <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
+                  </div>`; 
+        }); 
+
+        // CHÈN THỦ CÔNG DÒNG GOLD VÀO CUỐI (CÓ SỰ KIỆN CLICK ĐỂ MỞ MODAL)
+        h += `<div class="fund-item fund-gold d-flex justify-content-between align-items-center" onclick="new bootstrap.Modal(document.getElementById('goldModal')).show()">
+                <div class="fw-bold text-dark"><i class="bi bi-stars text-warning me-2"></i>Gold <small class="text-muted fw-normal fst-italic" style="font-size: 0.75rem;">(Chạm để xem chi tiết)</small></div>
+                <div class="fw-bold text-success"><span id="anim-fund-gold">${goldTotalValue.toLocaleString('vi-VN')}</span> ₫</div>
+              </div>`;
+
+        document.getElementById('ui-funds-list').innerHTML = h; 
+        
+        // Chạy hiệu ứng số tiền cho các quỹ thường
+        data.funds.forEach((f, idx) => {
+            if (f === 'Gold') return; 
+            const el = document.getElementById(`anim-fund-${idx}`);
+            if(!el) return;
+            const val = Number(data.balances[f] || 0);
+            if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
+            else animateMoney(el, val, 1000 + (idx * 200));
+        });
+        
+        // --- 4. KHỞI TẠO CÁC PHẦN KHÁC ---
+        renderHistoryList(); 
+        
+        let fO = data.funds.map(f => `<option value="${f}">${f}</option>`).join(''); 
+        document.getElementById('inpFundSource').innerHTML = fO; 
+        document.getElementById('inpFundDest').innerHTML = fO; 
+        
+        const currentRepFund = document.getElementById('reportFundFilter').value;
+        document.getElementById('reportFundFilter').innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
+        if(data.funds.includes(currentRepFund)) document.getElementById('reportFundFilter').value = currentRepFund;
+
+        document.getElementById('inpCategory').innerHTML = data.categories.map(c => `<option value="${c}">${c}</option>`).join(''); 
+
+        const rL = (a, n, c) => a.map(i => `<li class="list-group-item d-flex justify-content-between px-0 border-0">${i}<i class="bi bi-trash text-${c}" onclick="${n}('${i}')"></i></li>`).join(''); 
+        document.getElementById('listCat').innerHTML = rL(data.categories, 'delCat', 'danger'); 
+        document.getElementById('listFund').innerHTML = rL(data.funds, 'delFund', 'primary'); 
+
+        if(document.getElementById('tab-report').classList.contains('active')) renderCharts(); 
     }
 
     function saveData() { 
@@ -944,96 +1090,7 @@
       });
     }
 
-    function renderDashboard(data, isFromCache) {
-        let goldTotalValue = 0;
-        let tbodyGold = '';
-        if (data.goldRecords && data.goldRecords.length > 0) {
-            document.getElementById('ui-gold-ledger').style.display = 'block';
-            data.goldRecords.forEach((g, i) => {
-                let w = parseFloat(g.weight);
-                let wChi = w;
-                if(g.unit === 'Phân') wChi = w / 10;
-                if(g.unit === 'Lượng') wChi = w * 10;
-                
-                let currentVal = wChi * CURRENT_GOLD_PRICE;
-                goldTotalValue += currentVal;
-                
-                let colorClass = CURRENT_GOLD_PRICE >= g.buyPrice ? 'text-success' : 'text-danger';
-                let priceDisplay = CURRENT_GOLD_PRICE > 0 ? CURRENT_GOLD_PRICE.toLocaleString('vi-VN') : 'Đang lấy...';
-                
-                tbodyGold += `
-                  <tr>
-                    <td>${i+1}</td>
-                    <td>${w}</td>
-                    <td>${g.unit}</td>
-                    <td>${Number(g.buyPrice).toLocaleString('vi-VN')}</td>
-                    <td class="${colorClass} fw-bold">${priceDisplay}</td>
-                  </tr>`;
-            });
-            document.getElementById('tbody-gold').innerHTML = tbodyGold;
-        } else {
-            document.getElementById('ui-gold-ledger').style.display = 'none';
-        }
-
-        let displayTotal = Number(data.total || 0) + goldTotalValue;
-        // Loại trừ rủi ro bị cộng dồn nếu backend vẫn đang trả về quỹ tĩnh tên 'Gold'
-        if (data.balances && data.balances['Gold']) {
-            displayTotal -= Number(data.balances['Gold']);
-        }
-
-        const totalEl = document.getElementById('ui-total');
-        totalEl.innerHTML = '<span id="anim-total">0</span> ₫';
-        if (isFromCache) document.getElementById('anim-total').innerText = displayTotal.toLocaleString('vi-VN');
-        else animateMoney(document.getElementById('anim-total'), displayTotal, 600);
-        
-        let h = ''; 
-        data.funds.forEach((f, idx) => { 
-            if (f === 'Gold') return; // Không hiển thị Quỹ Gold tĩnh nữa
-            h += `<div class="card-box d-flex justify-content-between py-3">
-                    <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
-                    <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
-                  </div>`; 
-        }); 
-        document.getElementById('ui-funds-list').innerHTML = h; 
-        
-        data.funds.forEach((f, idx) => {
-            if (f === 'Gold') return; 
-            const el = document.getElementById(`anim-fund-${idx}`);
-            if(!el) return;
-            const val = Number(data.balances[f] || 0);
-            if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
-            else animateMoney(el, val, 1000 + (idx * 200));
-        });
-        
-        renderHistoryList(); 
-        
-        let fO = data.funds.map(f => `<option value="${f}">${f}</option>`).join(''); 
-        document.getElementById('inpFundSource').innerHTML = fO; 
-        document.getElementById('inpFundDest').innerHTML = fO; 
-        
-        const currentRepFund = document.getElementById('reportFundFilter').value;
-        document.getElementById('reportFundFilter').innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
-        if(data.funds.includes(currentRepFund)) document.getElementById('reportFundFilter').value = currentRepFund;
-
-        document.getElementById('inpCategory').innerHTML = data.categories.map(c => `<option value="${c}">${c}</option>`).join(''); 
-
-        const rL = (a, n, c) => a.map(i => `<li class="list-group-item d-flex justify-content-between px-0 border-0">${i}<i class="bi bi-trash text-${c}" onclick="${n}('${i}')"></i></li>`).join(''); 
-        document.getElementById('listCat').innerHTML = rL(data.categories, 'delCat', 'danger'); 
-        document.getElementById('listFund').innerHTML = rL(data.funds, 'delFund', 'primary'); 
-
-        if(document.getElementById('tab-report').classList.contains('active')) renderCharts(); 
-    }
-
-    function renderHistoryList() { 
-        const f = GLOBAL_DATA.history.filter(i => isDateInRange(i.timestamp, CURRENT_HIST_FILTER, 'histStart', 'histEnd')); 
-        let hH = f.length ? '' : '<p class="text-center py-5 text-muted">Không có dữ liệu</p>'; 
-        f.forEach(h => { 
-            let c = h.type==='Thu'?'money-inc':(h.type==='Chi'?'money-exp':'text-primary'); 
-            hH += `<div class="card-box py-3"><div class="d-flex justify-content-between"><div><div class="fw-bold">${h.type==='Chuyen'?`Chuyển: ${h.fund}➔${h.toFund}`:h.category}</div><small class="text-muted">${h.dateStr}${h.note?` • ${h.note}`:''}</small></div><div class="text-end"><div class="${c} fs-5">${h.type==='Chi'?'-':'+'}${Number(h.amount).toLocaleString()}</div><i class="bi bi-trash3 text-danger opacity-50" onclick="delTx(${h.rowIndex})"></i></div></div></div>`; 
-        }); 
-        document.getElementById('ui-history-list').innerHTML = hH; 
-    }
-
+    // --- CHART & FILTERS ---
     function renderCharts() { 
         const rawFiltered = GLOBAL_DATA.history.filter(i => {
             const inTimeRange = isDateInRange(i.timestamp, document.getElementById('reportFilter').value, 'repStart', 'repEnd');
@@ -1111,40 +1168,7 @@
         renderCharts(); 
     }
 
-    function toggleMode() { 
-        const type = document.querySelector('input[name="type"]:checked').value; 
-        const isChuyen = type === 'Chuyen'; 
-        const isVang = type === 'Vang';
-        
-        document.getElementById('divToFund').style.display = isChuyen ? 'block' : 'none'; 
-        document.getElementById('divCategory').style.display = (isChuyen || isVang) ? 'none' : 'block'; 
-        
-        document.getElementById('divStandardFunds').style.display = isVang ? 'none' : 'flex';
-        document.getElementById('divAmount').style.display = isVang ? 'none' : 'block';
-        document.getElementById('divGold').style.display = isVang ? 'block' : 'none';
-
-        document.getElementById('lblDate').innerText = isVang ? 'Ngày nhập Vàng (có thể chọn ngày quá khứ)' : 'Ngày giao dịch';
-    }
-
-    function calcWithdraw() { 
-        const cur = GLOBAL_DATA.balances['Tiền mặt']||0; 
-        Swal.fire({
-            title:'Rút tiền', html:`Tiền mặt hiện tại: <b>${cur.toLocaleString()}đ</b><br>Nhập số tiền mong muốn:`, input:'text', confirmButtonColor:'#ffc107', showCancelButton:true,
-            didOpen: () => { const input = Swal.getInput(); input.oninput = function() { let v = this.value.replace(/[^0-9]/g, ''); if(v) this.value = parseInt(v).toLocaleString('vi-VN'); }; }
-        }).then(r => { 
-            if(r.isConfirmed && r.value) { 
-                const t = parseInt(r.value.replace(/\./g,'')); const n = t-cur; 
-                if(n<=0) return Swal.fire('Đã đủ tiền!', '', 'info'); 
-                const d = Math.floor(n/50000)*50000; const l = n - d;
-                Swal.fire('Kết quả', `Rút: <b class="fs-4 text-success">${d.toLocaleString()}đ</b><br>Lẻ: ${l.toLocaleString()}đ`, 'success'); 
-            } 
-        }); 
-    }
-
-    // ===============================================
-    // CÁC HÀM CHO TÍNH NĂNG BIỂU ĐỒ VÀNG
-    // ===============================================
-
+    // --- GOLD CHART ---
     async function fetchGoldData(period) {
         document.getElementById('gold-status').innerText = "Đang tải dữ liệu...";
         const [resBuy, resSell] = await Promise.all([
@@ -1187,7 +1211,7 @@
             
             if(goldData1Year.length > 0) {
                 CURRENT_GOLD_PRICE = goldData1Year[goldData1Year.length - 1].buy;
-                localStorage.setItem('meowFinGoldPrice', CURRENT_GOLD_PRICE); // Lưu giá vào cache
+                localStorage.setItem('meowFinGoldPrice', CURRENT_GOLD_PRICE);
 
                 // CHỈ render nếu dữ liệu Google Sheet đã có sẵn
                 if(GLOBAL_DATA && GLOBAL_DATA.funds && GLOBAL_DATA.funds.length > 0) {
@@ -1324,6 +1348,83 @@
         });
     }
 
+    // --- CÁC HÀM NÉN/HOÀN TÁC ---
+    function showCompressionMenu() {
+      Swal.fire({
+        title: 'Nén dữ liệu',
+        text: 'Chọn khoảng thời gian đóng sổ:',
+        input: 'radio',
+        inputOptions: { 'week': 'Cũ hơn 7 ngày', 'month': 'Trước tháng này', 'year': 'Trước năm nay' },
+        inputValue: 'month', 
+        showCancelButton: true, confirmButtonColor: '#ffc107', confirmButtonText: 'Nén ngay'
+      }).then((result) => {
+        if (result.isConfirmed) executeCompression(result.value);
+      });
+    }
+
+    function executeCompression(p1) {
+      showLoadingBonk('Đang nén...');
+      callGoogleApi('archiveDataByPeriod', {p1: p1}).then(msg => {
+        Swal.fire('Kết quả', msg, 'success');
+        loadData(); 
+      });
+    }
+
+    function undoArchive() {
+      Swal.fire({
+        title: 'Hoàn tác?', text: "Khôi phục dữ liệu từ bản nén gần nhất.", icon: 'question',
+        showCancelButton: true, confirmButtonColor: '#6c757d', confirmButtonText: 'Đồng ý'
+      }).then((r) => {
+        if (r.isConfirmed) {
+          showLoadingBonk('Đang khôi phục...');
+          callGoogleApi('undoLastArchive').then(msg => {
+            Swal.fire('Thông báo', msg, 'info');
+            loadData();
+          });
+        }
+      });
+    }
+
+    function showArchives() {
+      showLoadingBonk('Đang tải...');
+      callGoogleApi('getArchiveList').then(files => {
+        Swal.close();
+        let html = '';
+        if (files.length === 0) {
+          html = '<p class="text-center text-muted">Chưa có file nào.</p>';
+        } else {
+          files.forEach(f => {
+            html += `
+              <div class="list-group-item d-flex justify-content-between">
+                <div><small class="fw-bold">${f.name}</small></div>
+                <i class="bi bi-eye text-success" onclick="viewArchiveData('${f.id}','${f.name}')"></i>
+              </div>`;
+          });
+        }
+        document.getElementById('archiveList').innerHTML = html;
+      });
+    }
+
+    function viewArchiveData(id, name) {
+      showLoadingBonk('Đang xử lý...');
+      callGoogleApi('getArchiveContent', id).then(data => {
+        Swal.fire({
+          title: name,
+          html: `Tìm thấy ${data.length} giao dịch.`,
+          showDenyButton: true,
+          denyButtonText: 'Khôi phục',
+          confirmButtonText: 'Đóng'
+        }).then((r) => {
+          if (r.isDenied) {
+            showLoadingBonk('Đang khôi phục...');
+            callGoogleApi('restoreDataFromDrive', id).then(msg => {
+              Swal.fire('Xong', msg, 'success');
+              loadData(); 
+            });
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>
