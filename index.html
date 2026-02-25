@@ -1075,37 +1075,37 @@
         
         let combinedData = [...GLOBAL_DATA.history];
 
-        // Gộp Vàng vào Lịch sử & Dịch lại ngày tháng chuẩn xác
+        // 1. Gộp Vàng và xử lý lỗi ngày tháng dd/mm/yyyy
         if (GLOBAL_DATA.goldRecords && GLOBAL_DATA.goldRecords.length > 0) {
             GLOBAL_DATA.goldRecords.forEach(g => {
                 let dateVal = String(g.date || '');
-                let ts = new Date().getTime(); // Giá trị mặc định an toàn
+                let ts = 0;
                 
-                // Thuật toán bẻ khóa ngày tháng "dd/MM/yyyy" thành Timestamp chuẩn
+                // Kỹ thuật bẻ nhỏ chuỗi để máy tính hiểu đúng ngày Việt Nam
                 if (dateVal.includes('/')) {
-                    let parts = dateVal.split('/');
-                    if (parts.length === 3) {
-                        ts = new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-                    }
-                } else if (dateVal.includes('-')) { 
-                    let parts = dateVal.split('-');
-                    if (parts.length === 3) {
-                        ts = new Date(parts[0], parts[1] - 1, parts[2]).getTime();
-                    }
+                    let p = dateVal.split('/');
+                    if (p.length === 3) ts = new Date(p[2], p[1] - 1, p[0]).getTime();
+                } else if (dateVal.includes('-')) {
+                    let p = dateVal.split('-');
+                    if (p.length === 3) ts = new Date(p[0], p[1] - 1, p[2]).getTime();
                 }
 
-                combinedData.push({
-                    timestamp: ts,
-                    dateStr: dateVal, // Vẫn giữ nguyên chuỗi để in ra màn hình cho đẹp
-                    type: 'Vang', 
-                    category: `Mua Vàng (${g.weight} ${g.unit})`,
-                    note: g.note || '',
-                    amount: g.buyPrice,
-                    isGold: true
-                });
+                if (ts > 0) {
+                    let cleanPrice = String(g.buyPrice).replace(/\./g, '');
+                    combinedData.push({
+                        timestamp: ts,
+                        dateStr: dateVal,
+                        type: 'Vang', 
+                        category: `Mua Vàng (${g.weight} ${g.unit})`,
+                        note: g.note || '',
+                        amount: parseFloat(cleanPrice) || 0,
+                        isGold: true
+                    });
+                }
             });
         }
 
+        // 2. Lọc theo bộ lọc hiện tại và Sắp xếp mới nhất lên đầu
         const f = combinedData
             .filter(i => isDateInRange(i.timestamp, CURRENT_HIST_FILTER, 'histStart', 'histEnd'))
             .sort((a, b) => b.timestamp - a.timestamp); 
@@ -1120,17 +1120,21 @@
 
             if (h.type === 'Thu') { valClass = 'money-inc'; sign = '+'; }
             else if (h.type === 'Chi') { valClass = 'money-exp'; sign = '-'; }
-            else if (h.type === 'Vang') { valClass = 'text-warning'; sign = '-'; iconTitle = '<i class="bi bi-stars text-warning me-1"></i> '; }
+            else if (h.type === 'Vang') { 
+                valClass = 'text-warning'; 
+                sign = '-'; 
+                iconTitle = '<i class="bi bi-stars text-warning me-1"></i> '; 
+            }
 
             if (!h.isGold) {
                 delBtn = `<i class="bi bi-trash3 text-danger opacity-50 ms-2" style="cursor:pointer;" onclick="delTx(${h.rowIndex})"></i>`;
             }
 
             hH += `
-            <div class="card-box py-3">
+            <div class="card-box py-3 shadow-sm border-0 mb-3" style="border-radius: 15px;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="fw-bold">${iconTitle}${h.type==='Chuyen'?`Chuyển: ${h.fund}➔${h.toFund}`:h.category}</div>
+                        <div class="fw-bold" style="font-size: 0.95rem;">${iconTitle}${h.type==='Chuyen'?`Chuyển: ${h.fund}➔${h.toFund}`:h.category}</div>
                         <small class="text-muted">${h.dateStr}${h.note?` • ${h.note}`:''}</small>
                     </div>
                     <div class="text-end d-flex align-items-center">
