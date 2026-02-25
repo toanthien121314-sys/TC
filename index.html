@@ -498,7 +498,7 @@
 
     const API_URL = "https://script.google.com/macros/s/AKfycbz4-8qbW9zQ8oq7l4pSmtJT1dkHLOZNGBjTbHCmVBp0wCR9VeRxOuLjnZyKssD7vYzx/exec"; 
 
-    // THÊM: goldRecords vào GLOBAL_DATA
+    // Bổ sung cấu trúc chứa dữ liệu Vàng
     let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{}, goldRecords:[] };
     let CHART_COMBINED = null; 
     let CHART_FUND = null; 
@@ -582,11 +582,19 @@
     };
 
     function initApp() { 
+        // 1. Phục hồi Cache Giá vàng để tránh bị 0 đ lúc mới mở
+        const cachedGoldPrice = localStorage.getItem('meowFinGoldPrice');
+        if (cachedGoldPrice) CURRENT_GOLD_PRICE = parseInt(cachedGoldPrice);
+
+        // 2. Phục hồi Cache Dữ liệu chính
         const cachedData = localStorage.getItem('meowFinCache');
         if (cachedData) {
             try {
                 GLOBAL_DATA = JSON.parse(cachedData);
-                renderDashboard(GLOBAL_DATA, true); 
+                // Phải chắc chắn có mảng funds thì mới render để tránh báo lỗi lúc giao thời
+                if (GLOBAL_DATA.funds && GLOBAL_DATA.funds.length > 0) {
+                    renderDashboard(GLOBAL_DATA, true); 
+                }
             } catch (e) { console.error("Lỗi đọc cache"); }
         }
         
@@ -639,6 +647,7 @@
     function loadData() { 
         let fetchId = ++currentFetchId; 
         
+        // Cố tình ép hiện dấu 3 chấm nếu không có bộ nhớ đệm
         if (!localStorage.getItem('meowFinCache')) {
             const dotsHtml = '<div class="glowing-dots"><span></span><span></span><span></span></div>';
             document.getElementById('ui-total').innerHTML = dotsHtml;
@@ -649,6 +658,7 @@
             if (fetchId !== currentFetchId) return;
             if (JSON.stringify(res) === localStorage.getItem('meowFinCache')) return;
 
+            // Đảm bảo không lỗi nếu backend rỗng
             if (!res.goldRecords) res.goldRecords = []; 
 
             GLOBAL_DATA = res; 
@@ -966,6 +976,7 @@
         }
 
         let displayTotal = Number(data.total || 0) + goldTotalValue;
+        // Loại trừ rủi ro bị cộng dồn nếu backend vẫn đang trả về quỹ tĩnh tên 'Gold'
         if (data.balances && data.balances['Gold']) {
             displayTotal -= Number(data.balances['Gold']);
         }
@@ -977,7 +988,7 @@
         
         let h = ''; 
         data.funds.forEach((f, idx) => { 
-            if (f === 'Gold') return; 
+            if (f === 'Gold') return; // Không hiển thị Quỹ Gold tĩnh nữa
             h += `<div class="card-box d-flex justify-content-between py-3">
                     <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
                     <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
@@ -1112,7 +1123,6 @@
         document.getElementById('divAmount').style.display = isVang ? 'none' : 'block';
         document.getElementById('divGold').style.display = isVang ? 'block' : 'none';
 
-        // Đổi nhãn Ngày nhập cho rõ ràng
         document.getElementById('lblDate').innerText = isVang ? 'Ngày nhập Vàng (có thể chọn ngày quá khứ)' : 'Ngày giao dịch';
     }
 
@@ -1177,7 +1187,12 @@
             
             if(goldData1Year.length > 0) {
                 CURRENT_GOLD_PRICE = goldData1Year[goldData1Year.length - 1].buy;
-                if(GLOBAL_DATA.funds) renderDashboard(GLOBAL_DATA, true);
+                localStorage.setItem('meowFinGoldPrice', CURRENT_GOLD_PRICE); // Lưu giá vào cache
+
+                // CHỈ render nếu dữ liệu Google Sheet đã có sẵn
+                if(GLOBAL_DATA && GLOBAL_DATA.funds && GLOBAL_DATA.funds.length > 0) {
+                    renderDashboard(GLOBAL_DATA, true);
+                }
             }
 
             changeGoldTimeframe(30, document.getElementById('gold-btn-30'));
