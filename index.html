@@ -304,7 +304,7 @@
                 <div class="table-responsive bg-white rounded-3 border">
                   <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size: 0.75rem;">
                     <thead class="table-light">
-                      <tr><th>STT</th><th>KL</th><th>Đ.Vị</th><th>Tổng vốn</th><th>Giá mới</th></tr>
+                      <tr><th>Vàng</th><th>Tổng vốn</th><th>Giá mới</th><th>Lãi/Lỗ</th></tr>
                     </thead>
                     <tbody id="tbody-gold"></tbody>
                   </table>
@@ -953,51 +953,44 @@
                 let w = parseFloat(g.weight);
                 let totalBuyPrice = parseFloat(g.buyPrice);
                 
-                // 1. Tính giá MỚI của 1 đơn vị
                 let currentUnitPrice = 0;
                 if (g.unit === 'Lượng') currentUnitPrice = CURRENT_GOLD_PRICE;
                 else if (g.unit === 'Chỉ') currentUnitPrice = CURRENT_GOLD_PRICE / 10;
                 else if (g.unit === 'Phân') currentUnitPrice = CURRENT_GOLD_PRICE / 100;
                 
-                // 2. Tính TỔNG GIÁ TRỊ HIỆN TẠI
                 let totalCurrentVal = w * currentUnitPrice;
                 goldTotalValue += totalCurrentVal;
                 
-                // 3. Tính toán Lời / Lỗ
                 let profitAmount = totalCurrentVal - totalBuyPrice;
                 let profitPercent = totalBuyPrice > 0 ? (profitAmount / totalBuyPrice) * 100 : 0;
-                
-                // 4. Định dạng màu sắc và dấu (+/-)
                 let colorClass = profitAmount >= 0 ? 'text-success' : 'text-danger';
-                let sign = profitAmount > 0 ? '+' : (profitAmount < 0 ? '-' : '');
-                let profitText = profitAmount !== 0 ? 
-                    `${sign}${Math.abs(Math.round(profitAmount)).toLocaleString('vi-VN')} đ (${sign}${Math.abs(profitPercent).toFixed(2)}%)` : 
-                    `Hòa vốn`;
-                
-                // 5. Cột Tổng vốn: Tổng ở trên, Đơn giá ở dưới
+                let sign = profitAmount > 0 ? '+' : '';
+
+                // Cột Tổng vốn: Tổng ở trên, Đơn giá ở dưới
                 let buyUnitPrice = w > 0 ? (totalBuyPrice / w) : 0;
                 let buyCellHtml = `
                     <div class="fw-bold text-dark">${totalBuyPrice.toLocaleString('vi-VN')}</div>
                     <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(buyUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
                 `;
 
-                // 6. Cột Giá mới: Tổng ở trên, Đơn giá ở dưới, có thêm nhãn Lời/Lỗ
+                // Cột Giá mới: Tổng ở trên, Đơn giá ở dưới
                 let newPriceCellHtml = currentUnitPrice > 0 ? `
-                    <div class="fw-bold ${colorClass}">${Math.round(totalCurrentVal).toLocaleString('vi-VN')}</div>
+                    <div class="fw-bold text-dark">${Math.round(totalCurrentVal).toLocaleString('vi-VN')}</div>
                     <div class="text-muted fw-normal mt-1" style="font-size: 0.7rem;">${Math.round(currentUnitPrice).toLocaleString('vi-VN')} đ/đv</div>
-                    <div class="${colorClass} fw-bold mt-1" style="font-size: 0.7rem; background-color: ${profitAmount >= 0 ? 'rgba(25, 135, 84, 0.1)' : 'rgba(220, 53, 69, 0.1)'}; padding: 2px 5px; border-radius: 4px; display: inline-block;">
-                        ${profitText}
-                    </div>
                 ` : 'Đang lấy...';
 
-                // Bỏ bớt class màu ở thẻ <td> để các <div> bên trong tự control màu
+                // Cột Lãi/Lỗ riêng biệt: Tiền ở trên, Phần trăm ở dưới
+                let profitCellHtml = currentUnitPrice > 0 ? `
+                    <div class="${colorClass} fw-bold">${sign}${Math.round(profitAmount).toLocaleString('vi-VN')}</div>
+                    <div class="${colorClass} fw-normal mt-1" style="font-size: 0.7rem;">${sign}${profitPercent.toFixed(2)}%</div>
+                ` : '-';
+
                 tbodyGold += `
                   <tr style="vertical-align: middle;">
-                    <td>${i+1}</td>
-                    <td>${w}</td>
-                    <td>${g.unit}</td>
+                    <td class="fw-bold">${w} <span class="fw-normal text-muted">${g.unit}</span></td>
                     <td>${buyCellHtml}</td>
                     <td>${newPriceCellHtml}</td>
+                    <td>${profitCellHtml}</td>
                   </tr>`;
             });
             document.getElementById('tbody-gold').innerHTML = tbodyGold;
@@ -1035,23 +1028,66 @@
             else animateMoney(el, val, 1000 + (idx * 200));
         });
         
-        renderHistoryList(); 
-        
-        let fO = data.funds.map(f => `<option value="${f}">${f}</option>`).join(''); 
-        document.getElementById('inpFundSource').innerHTML = fO; 
-        document.getElementById('inpFundDest').innerHTML = fO; 
-        
-        const currentRepFund = document.getElementById('reportFundFilter').value;
-        document.getElementById('reportFundFilter').innerHTML = '<option value="all">Tất cả các quỹ</option>' + fO;
-        if(data.funds.includes(currentRepFund)) document.getElementById('reportFundFilter').value = currentRepFund;
+        function renderHistoryList() { 
+        // 1. Gộp dữ liệu Lịch sử thường và Lịch sử Mua Vàng lại với nhau
+        let combinedData = [...GLOBAL_DATA.history];
 
-        document.getElementById('inpCategory').innerHTML = data.categories.map(c => `<option value="${c}">${c}</option>`).join(''); 
+        if (GLOBAL_DATA.goldRecords && GLOBAL_DATA.goldRecords.length > 0) {
+            GLOBAL_DATA.goldRecords.forEach(g => {
+                let ts = new Date(g.date).getTime();
+                // Sửa lại format ngày cho đồng nhất (dd/mm/yyyy)
+                let dParts = g.date.split('-');
+                let dateStr = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : g.date;
 
-        const rL = (a, n, c) => a.map(i => `<li class="list-group-item d-flex justify-content-between px-0 border-0">${i}<i class="bi bi-trash text-${c}" onclick="${n}('${i}')"></i></li>`).join(''); 
-        document.getElementById('listCat').innerHTML = rL(data.categories, 'delCat', 'danger'); 
-        document.getElementById('listFund').innerHTML = rL(data.funds, 'delFund', 'primary'); 
+                combinedData.push({
+                    timestamp: ts,
+                    dateStr: dateStr,
+                    type: 'Vang', 
+                    category: `Mua Vàng (${g.weight} ${g.unit})`,
+                    note: g.note || '',
+                    amount: g.buyPrice, // Tiền đã chi ra để mua
+                    isGold: true // Cờ đánh dấu để không hiển thị nút Xóa (vì API xóa vàng cần làm riêng)
+                });
+            });
+        }
 
-        if(document.getElementById('tab-report').classList.contains('active')) renderCharts(); 
+        // 2. Lọc theo thời gian và Sắp xếp mới nhất lên đầu
+        const f = combinedData
+            .filter(i => isDateInRange(i.timestamp, CURRENT_HIST_FILTER, 'histStart', 'histEnd'))
+            .sort((a, b) => b.timestamp - a.timestamp); 
+
+        let hH = f.length ? '' : '<p class="text-center py-5 text-muted">Không có dữ liệu</p>'; 
+
+        f.forEach(h => { 
+            let valClass = 'text-primary';
+            let sign = '';
+            let iconTitle = '';
+            let delBtn = '';
+
+            if (h.type === 'Thu') { valClass = 'money-inc'; sign = '+'; }
+            else if (h.type === 'Chi') { valClass = 'money-exp'; sign = '-'; }
+            else if (h.type === 'Vang') { valClass = 'text-warning'; sign = '-'; iconTitle = '<i class="bi bi-stars text-warning me-1"></i>'; } // Vàng hiển thị như một khoản tiền xuất ra
+
+            // Hiện nút xóa cho giao dịch thường
+            if (!h.isGold) {
+                delBtn = `<i class="bi bi-trash3 text-danger opacity-50 ms-2" style="cursor:pointer;" onclick="delTx(${h.rowIndex})"></i>`;
+            }
+
+            hH += `
+            <div class="card-box py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">${iconTitle}${h.type==='Chuyen'?`Chuyển: ${h.fund}➔${h.toFund}`:h.category}</div>
+                        <small class="text-muted">${h.dateStr}${h.note?` • ${h.note}`:''}</small>
+                    </div>
+                    <div class="text-end d-flex align-items-center">
+                        <div class="${valClass} fs-6 fw-bold">${sign}${Number(h.amount).toLocaleString()}</div>
+                        ${delBtn}
+                    </div>
+                </div>
+            </div>`; 
+        }); 
+        document.getElementById('ui-history-list').innerHTML = hH; 
     }
 
     function renderHistoryList() { 
