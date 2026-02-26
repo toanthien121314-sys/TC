@@ -1041,14 +1041,27 @@
         
         // 3. RENDER DANH SÁCH QUỸ
         let h = ''; 
+        let totalAvailable = 0; // Thêm biến cộng dồn tổng tiền
+
         if(data.funds) {
             data.funds.forEach((f, idx) => { 
                 if (f === 'Gold') return; 
-                h += `<div class="card-box d-flex justify-content-between py-3">
+                
+                // Lấy số dư của từng quỹ và cộng dồn
+                let fundBalance = Number(data.balances[f] || 0);
+                totalAvailable += fundBalance;
+
+                h += `<div class="card-box d-flex justify-content-between py-3 mb-2">
                         <div class="fw-bold"><i class="bi bi-wallet2 text-warning me-2"></i>${f}</div>
                         <div class="fw-bold text-success"><span id="anim-fund-${idx}">0</span> ₫</div>
                       </div>`; 
             }); 
+            
+            // Thêm một khối nổi bật hiển thị Tổng tiền ở cuối danh sách
+            h += `<div class="card-box d-flex justify-content-between py-3 mt-3" style="background-color: #e8f5e9; border: 1px solid #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.15);">
+                    <div class="fw-bold text-success"><i class="bi bi-cash-stack me-2"></i>Tổng tiền khả dụng</div>
+                    <div class="fw-bold text-success fs-5"><span id="anim-fund-total">0</span> ₫</div>
+                  </div>`;
         }
         const fundsListEl = document.getElementById('ui-funds-list');
         if(fundsListEl) fundsListEl.innerHTML = h; 
@@ -1062,6 +1075,13 @@
                 if(isFromCache) el.innerText = val.toLocaleString('vi-VN');
                 else animateMoney(el, val, 1000 + (idx * 200));
             });
+            
+            // Chạy hiệu ứng số đếm cho khối Tổng tiền mới thêm
+            const totalEl = document.getElementById('anim-fund-total');
+            if (totalEl) {
+                if(isFromCache) totalEl.innerText = totalAvailable.toLocaleString('vi-VN');
+                else animateMoney(totalEl, totalAvailable, 1500);
+            }
         }
         
         // 4. CHẠY CÁC THÀNH PHẦN KHÁC
