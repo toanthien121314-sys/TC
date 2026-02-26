@@ -443,7 +443,12 @@
         </div>
 
         <div id="tab-invest" class="tab-content">
-          <h5 class="fw-bold mb-3 mt-4 ps-2">Thị trường Vàng</h5>
+          <div class="d-flex justify-content-between align-items-center mt-4 mb-3 ps-2 pe-2">
+            <h5 class="fw-bold mb-0">Thị trường Vàng</h5>
+            <button class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm" onclick="refreshGoldData()">
+              <i class="bi bi-arrow-clockwise"></i> Cập nhật
+            </button>
+          </div>
           
           <div class="card-box text-center">
             <h6 id="gold-chart-title" class="fw-bold text-warning mb-2">Biểu Đồ Giá Vàng SJC (1 Tháng)</h6>
@@ -1460,6 +1465,29 @@
                     }
                 }
             }
+        });
+    }
+    async function refreshGoldData() {
+        // Hiện hiệu ứng loading
+        showLoadingBonk('Đang tải giá vàng mới nhất...');
+        
+        // Xóa rỗng các biến lưu trữ dữ liệu cũ
+        goldData1Year = [];
+        goldDataAll = [];
+        
+        // Gọi lại hàm khởi tạo biểu đồ vàng (hàm này sẽ tự tải lại API và vẽ lại biểu đồ)
+        await initGoldChart();
+        
+        // Tắt loading và hiện thông báo thành công dạng popup nhỏ gọn (Toast)
+        Swal.close();
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Đã cập nhật giá vàng mới nhất!",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
         });
     }
 
