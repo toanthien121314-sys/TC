@@ -968,6 +968,18 @@
         });
       });
     }
+    function toggleGoldLedger() {
+        const ledgerEl = document.getElementById('ui-gold-ledger');
+        if (ledgerEl) {
+            if (ledgerEl.style.display === 'none' || ledgerEl.style.display === '') {
+                ledgerEl.style.display = 'block';
+                // Tự động cuộn trang xuống nhẹ nhàng để thấy rõ bảng
+                ledgerEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                ledgerEl.style.display = 'none';
+            }
+        }
+    }
 
     function renderDashboard(data, isFromCache) {
         let goldTotalValue = 0;
@@ -976,7 +988,7 @@
         // 1. RENDER BẢNG VÀNG (Đã thêm cơ chế bảo vệ DOM chống sập)
         if (data.goldRecords && data.goldRecords.length > 0) {
             const ledgerEl = document.getElementById('ui-gold-ledger');
-            if(ledgerEl) ledgerEl.style.display = 'block';
+            if(ledgerEl) ledgerEl.style.display = 'none';
             
             data.goldRecords.forEach((g, i) => {
                 let w = parseFloat(g.weight) || 0;
@@ -1041,13 +1053,11 @@
         
         // 3. RENDER DANH SÁCH QUỸ
         let h = ''; 
-        let totalAvailable = 0; // Thêm biến cộng dồn tổng tiền
+        let totalAvailable = 0;
 
         if(data.funds) {
             data.funds.forEach((f, idx) => { 
                 if (f === 'Gold') return; 
-                
-                // Lấy số dư của từng quỹ và cộng dồn
                 let fundBalance = Number(data.balances[f] || 0);
                 totalAvailable += fundBalance;
 
@@ -1058,10 +1068,18 @@
             }); 
             
             // Thêm một khối nổi bật hiển thị Tổng tiền ở cuối danh sách
-            h += `<div class="card-box d-flex justify-content-between py-3 mt-3" style="background-color: #e8f5e9; border: 1px solid #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.15);">
+            h += `<div class="card-box d-flex justify-content-between py-3 mt-3 mb-2" style="background-color: #e8f5e9; border: 1px solid #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.15);">
                     <div class="fw-bold text-success"><i class="bi bi-cash-stack me-2"></i>Tổng tiền khả dụng</div>
                     <div class="fw-bold text-success fs-5"><span id="anim-fund-total">0</span> ₫</div>
                   </div>`;
+                  
+            // Thêm thẻ Quỹ Vàng (Có thể click để xem chi tiết)
+            if (goldTotalValue > 0 || (data.goldRecords && data.goldRecords.length > 0)) {
+                h += `<div class="card-box d-flex justify-content-between py-3 mb-2" style="cursor: pointer; border: 1px dashed #ffc107; background-color: #fffbf0;" onclick="toggleGoldLedger()">
+                        <div class="fw-bold text-warning"><i class="bi bi-stars me-2"></i>Quỹ Vàng (Nhấn để xem)</div>
+                        <div class="fw-bold text-warning"><span id="anim-fund-gold">0</span> ₫</div>
+                      </div>`;
+            }
         }
         const fundsListEl = document.getElementById('ui-funds-list');
         if(fundsListEl) fundsListEl.innerHTML = h; 
@@ -1076,11 +1094,18 @@
                 else animateMoney(el, val, 1000 + (idx * 200));
             });
             
-            // Chạy hiệu ứng số đếm cho khối Tổng tiền mới thêm
+            // Chạy hiệu ứng số đếm cho Tổng tiền
             const totalEl = document.getElementById('anim-fund-total');
             if (totalEl) {
                 if(isFromCache) totalEl.innerText = totalAvailable.toLocaleString('vi-VN');
                 else animateMoney(totalEl, totalAvailable, 1500);
+            }
+            
+            // Chạy hiệu ứng số đếm cho Quỹ Vàng
+            const goldEl = document.getElementById('anim-fund-gold');
+            if (goldEl) {
+                if(isFromCache) goldEl.innerText = Math.round(goldTotalValue).toLocaleString('vi-VN');
+                else animateMoney(goldEl, goldTotalValue, 1500);
             }
         }
         
