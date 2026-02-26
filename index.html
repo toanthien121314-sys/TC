@@ -400,9 +400,9 @@
                  </div>
                </div>
                <div class="mb-0">
-                 <label class="small fw-bold text-dark mb-1">Tổng tiền mua (VNĐ)</label>
+                 <label class="small fw-bold text-dark mb-1">Giá gốc / Giá trị ghi nhận (VNĐ)</label>
                  <input type="text" class="form-control text-warning fw-bold fs-5" id="inpGoldPrice" placeholder="VD: 7.450.000" inputmode="numeric">
-                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập tổng số tiền bạn đã thanh toán cho khối lượng trên.</small>
+                 <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">* Nhập số tiền mua, hoặc giá trị thị trường lúc được tặng để làm vốn tính lãi/lỗ.</small>
                </div>
             </div>
 
@@ -1148,7 +1148,7 @@
             else if (h.type === 'Chi') { valClass = 'money-exp'; sign = '-'; }
             else if (h.type === 'Vang') { 
                 valClass = 'text-warning'; 
-                sign = '-'; 
+                sign = '+'; 
                 iconTitle = '<i class="bi bi-stars text-warning me-1"></i> '; 
             }
 
