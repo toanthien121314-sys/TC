@@ -496,7 +496,7 @@
     // KẾT NỐI API VÀ LƯU ĐỆM CHUYÊN NGHIỆP
     // ===============================================
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbzueH1AJB0JkGBflMTBwVuOgVhHhz2uTWu6lx2VxvC1QBiU-1zwryNsPsJmOnndLz2p/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbzJEBd8cnWXo5VumzFqLqkCrVPH0vkGSPmDLvDmaLOS-3vlQ-Ya0RGSEFadLCGaGE5Q/exec"; 
 
     // Bổ sung cấu trúc chứa dữ liệu Vàng
     let GLOBAL_DATA = { history:[], funds:[], categories:[], balances:{}, goldRecords:[] };
@@ -724,6 +724,26 @@
             if(r.isConfirmed) {
                 showLoadingBonk('Đang xóa...');
                 callGoogleApi('deleteTransaction', idx).then(() => {
+                    Swal.close();
+                    loadData();
+                });
+            }
+        }); 
+    }
+    function delGoldTx(idx) { 
+        Swal.fire({
+            title: 'Xóa giao dịch Vàng?', 
+            text: 'Dữ liệu vàng sẽ bị xóa khỏi hệ thống',
+            icon: 'warning',
+            showCancelButton: true, 
+            confirmButtonColor: '#ffc107', 
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Xóa ngay',
+            cancelButtonText: 'Hủy'
+        }).then(r => { 
+            if(r.isConfirmed) {
+                showLoadingBonk('Đang xóa vàng...');
+                callGoogleApi('deleteGoldTransaction', idx).then(() => {
                     Swal.close();
                     loadData();
                 });
@@ -1100,6 +1120,7 @@
                         note: g.note || '',
                         amount: parseFloat(cleanPrice) || 0,
                         isGold: true
+                        rowIndex: g.rowIndex
                     });
                 }
             });
@@ -1126,7 +1147,9 @@
                 iconTitle = '<i class="bi bi-stars text-warning me-1"></i> '; 
             }
 
-            if (!h.isGold) {
+            if (h.isGold) {
+                delBtn = `<i class="bi bi-trash3 text-warning opacity-75 ms-2" style="cursor:pointer; font-size:1.1rem" onclick="delGoldTx(${h.rowIndex})"></i>`;
+            } else {
                 delBtn = `<i class="bi bi-trash3 text-danger opacity-50 ms-2" style="cursor:pointer;" onclick="delTx(${h.rowIndex})"></i>`;
             }
 
